@@ -30,6 +30,7 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 #results .ritem{padding:10px 14px;border-bottom:1px solid var(--line);cursor:pointer;display:flex;justify-content:space-between;align-items:center}
 #results .ritem:active{background:#eef2ff}
 #results .ritem b{font-size:14px}
+#results .ritem .sub{font-size:11px;color:var(--sub);margin-top:2px}
 #results .ritem .tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:3px}
 /* ===== 标签 ===== */
 .tag{font-size:10px;padding:1px 6px;border-radius:6px;background:#e5e7eb;color:#374151;font-weight:600}
@@ -38,13 +39,24 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 .tag.party{background:#fee2e2;color:#dc2626;border:1px solid #fca5a5}
 .tag.biz{background:#d1fae5;color:#047857}.tag.jun{background:#ffedd5;color:#c2410c}
 /* ===== 底部工具条 ===== */
-#toolbar{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);z-index:20;display:flex;gap:10px;align-items:center}
+#toolbar{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);z-index:20;display:flex;gap:8px;align-items:center;max-width:calc(100vw - 16px);overflow-x:auto;padding:4px;scrollbar-width:none}
+#toolbar::-webkit-scrollbar{display:none}
 /* ===== 提示 ===== */
-#hint{position:absolute;bottom:76px;left:50%;transform:translateX(-50%);z-index:19;background:rgba(15,23,42,.85);color:#fff;padding:8px 16px;border-radius:20px;font-size:13px;display:none;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
-/* ===== 图例 ===== */
-#legend{position:absolute;left:12px;bottom:70px;z-index:18;background:rgba(255,255,255,.94);border-radius:12px;padding:10px 12px;font-size:12px;box-shadow:0 4px 16px rgba(0,0,0,.2);display:flex;flex-direction:column;gap:5px}
+#hint{position:absolute;bottom:80px;left:50%;transform:translateX(-50%);z-index:19;background:rgba(15,23,42,.85);color:#fff;padding:8px 16px;border-radius:20px;font-size:13px;display:none;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
+/* ===== 图例/图层 ===== */
+#legend{position:absolute;left:12px;bottom:70px;z-index:18;background:rgba(255,255,255,.94);border-radius:12px;padding:10px 12px;font-size:12px;box-shadow:0 4px 16px rgba(0,0,0,.2);display:flex;flex-direction:column;gap:5px;max-height:60vh;overflow-y:auto}
 #legend .li{display:flex;align-items:center;gap:6px;color:#374151}
-#legend .dot{width:10px;height:10px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #cbd5e1}
+#legend .dot{width:10px;height:10px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #cbd5e1;flex:none}
+#legend .sep{border-top:1px dashed #d1d5db;margin:4px 0}
+#legend .li.tg{cursor:pointer;padding:2px 4px;border-radius:6px;user-select:none}
+#legend .li.tg.off{opacity:.35;text-decoration:line-through}
+#legend .li.tg:active{background:#eef2ff}
+#legend .sw{width:14px;height:4px;border-radius:2px;flex:none}
+/* ===== 画笔面板 ===== */
+#penPanel{position:absolute;top:60px;right:12px;z-index:22;background:#fff;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.3);padding:12px 14px;width:250px;display:none;font-size:13px}
+#penPanel.open{display:block}
+#penPanel .tip{color:var(--sub);font-size:12px;line-height:1.7;margin-bottom:8px}
+#penPanel .row{display:flex;gap:6px;flex-wrap:wrap}
 /* ===== 抽屉表单 ===== */
 #drawer{position:absolute;top:0;right:0;bottom:0;z-index:30;width:min(440px,100vw);background:var(--card);box-shadow:-8px 0 30px rgba(0,0,0,.3);display:none;flex-direction:column}
 #drawer.open{display:flex}
@@ -70,6 +82,7 @@ textarea{resize:vertical;min-height:56px}
 .srow input{border:1.5px solid var(--line);border-radius:8px;padding:6px 8px;font-size:13px}
 #drawer .dfoot{position:absolute;bottom:0;left:0;right:0;padding:12px 16px;background:#fff;border-top:1px solid var(--line);display:flex;gap:8px}
 #drawer .dfoot .btn{flex:1;justify-content:center;padding:11px}
+#drawer .dfoot .btn.del{flex:none;background:#fee2e2;color:#b91c1c}
 /* ===== 统计面板 ===== */
 #stats{position:absolute;inset:0;z-index:40;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;padding:16px}
 #stats.open{display:flex}
@@ -92,17 +105,26 @@ table.st th{background:#f1f5f9}
 .pin.bz{background:var(--green)}.pin.db{background:#3b82f6}
 .pin.sel{box-shadow:0 0 0 4px rgba(37,99,235,.4),0 2px 8px rgba(0,0,0,.45)}
 .maplibregl-marker{z-index:15}
+.nolab{width:20px;height:20px;border-radius:50%;background:rgba(37,99,235,.92);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;border:1.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);cursor:grab}
+.nolab.empty{width:12px;height:12px;background:rgba(37,99,235,.55)}
+.hallmk{font-size:26px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5));cursor:pointer}
+/* 区域信息弹窗 */
+#areaInfo{position:absolute;inset:0;z-index:42;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;padding:16px}
+#areaInfo.open{display:flex}
+#areaInfo .apanel{background:#fff;border-radius:16px;max-width:400px;width:100%;padding:18px}
 /* 引导层 */
-#guide{position:absolute;inset:0;z-index:50;background:rgba(15,23,42,.9);color:#fff;display:none;align-items:center;justify-content:center;padding:20px}
+#guide{position:absolute;inset:0;z-index:50;background:rgba(15,23,42,.9);color:#fff;display:none;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
 #guide.open{display:flex}
-#guide .gpanel{max-width:420px;font-size:14px;line-height:1.9}
+#guide .gpanel{max-width:440px;font-size:14px;line-height:1.9}
 #guide h2{margin-bottom:12px;font-size:20px}
 #guide ol{padding-left:20px}
 #guide .btn{margin-top:16px}
 @media (max-width:600px){
  #topbar .brand small{display:none}
- #legend{bottom:120px;font-size:11px;padding:8px}
+ #legend{bottom:130px;font-size:11px;padding:8px}
  .btn{padding:8px 10px;font-size:12px}
+ #penPanel{top:auto;bottom:150px;right:8px;left:8px;width:auto}
+ #toolbar{left:8px;right:8px;transform:none;justify-content:flex-start}
 }
 </style>
 </head>
@@ -111,7 +133,7 @@ table.st th{background:#f1f5f9}
 
 <div id="topbar">
   <div class="brand">🏘️ 檀园村务图<small>漂沙井镇 · 3D实景</small></div>
-  <input id="search" placeholder="搜索户主姓名 / 门牌…">
+  <input id="search" placeholder="搜索 户主 / 成员 / 编号 / 组…">
   <button class="btn pri" id="btnAdd">➕ 标记房屋</button>
   <button class="btn ghost" id="btnStats">📊 统计</button>
   <button class="btn ghost" id="btnData">💾 数据</button>
@@ -127,14 +149,31 @@ table.st th{background:#f1f5f9}
   <div class="li"><span class="dot" style="background:#ef4444"></span>监测户</div>
   <div class="li"><span class="dot" style="background:#3b82f6"></span>低保/特困</div>
   <div class="li"><span class="dot" style="background:#10b981"></span>经营主体</div>
+  <div class="sep"></div>
+  <div class="li" style="font-weight:700;color:#334155">区域图层(点显隐)</div>
 </div>
 
 <div id="hint"></div>
 
 <div id="toolbar">
-  <button class="btn ghost" onclick="pitchTo(60)" title="倾斜视角">🏔️ 3D视角</button>
+  <button class="btn ghost" id="btnPen" title="画村界/组界/田/山边界">✏️ 画区域</button>
+  <button class="btn ghost" id="btnBox" title="拖拽框选一个屋顶">📐 框屋顶</button>
+  <button class="btn ghost" id="btnDetect" title="自动识别当前视野内屋顶">🔍 识别屋顶</button>
+  <button class="btn ghost" id="btnHall" title="设置村部位置">🏛️ 村部</button>
+  <button class="btn ghost" onclick="pitchTo(60)" title="倾斜视角">🏔️ 3D</button>
   <button class="btn ghost" onclick="pitchTo(0)" title="俯视视角">🗺️ 俯视</button>
   <button class="btn ghost" onclick="goHome()">🏠 回村</button>
+</div>
+
+<!-- 画笔面板 -->
+<div id="penPanel">
+  <div class="tip" id="penTip">✏️ 逐点点击地图画边界：点两个点连成线，一路点下去即可。<b>中断不怕</b>，下次点「画区域」接着末尾继续画。</div>
+  <div class="row">
+    <button class="btn small" onclick="penUndo()">↩️ 撤销上一点</button>
+    <button class="btn small pri" onclick="penClose()">✅ 闭合区域</button>
+    <button class="btn small warn" onclick="penClear()">🗑️ 清除草稿</button>
+    <button class="btn small" onclick="setTool(null)">退出</button>
+  </div>
 </div>
 
 <!-- 抽屉 -->
@@ -144,7 +183,7 @@ table.st th{background:#f1f5f9}
   <div class="dfoot">
     <button class="btn" onclick="closeDrawer()">取消</button>
     <button class="btn pri" id="btnSave">💾 保存</button>
-    <button class="btn warn" id="btnDel">🗑️ 删除</button>
+    <button class="btn del" id="btnDel">🗑️ 删除</button>
   </div>
 </div>
 
@@ -158,31 +197,42 @@ table.st th{background:#f1f5f9}
 
 <!-- 数据管理 -->
 <div id="dataM" style="position:absolute;inset:0;z-index:41;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this)this.style.display='none'">
-  <div style="background:#fff;border-radius:16px;max-width:460px;width:100%;padding:20px;max-height:86vh;overflow-y:auto">
+  <div style="background:#fff;border-radius:16px;max-width:480px;width:100%;padding:20px;max-height:86vh;overflow-y:auto">
     <h3 style="margin-bottom:12px;display:flex;justify-content:space-between">💾 数据管理 <button class="btn small" onclick="document.getElementById('dataM').style.display='none'">关闭</button></h3>
     <p style="font-size:13px;color:#6b7280;line-height:1.8;margin-bottom:14px">所有数据自动保存在本浏览器中，<b>不上传任何服务器</b>。换设备或换浏览器前请先导出备份文件。</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn pri" onclick="exportJSON()">⬇️ 导出备份(JSON)</button>
       <button class="btn" onclick="document.getElementById('impFile').click()">⬆️ 导入备份</button>
       <button class="btn" onclick="exportCSV()">📄 导出花名册(Excel)</button>
+      <button class="btn" onclick="dlTemplate()">📋 下载导入模板</button>
+      <button class="btn" onclick="document.getElementById('impXls').click()">📥 Excel批量导入</button>
       <button class="btn warn" onclick="clearAll()">🗑️ 清空全部</button>
     </div>
     <input type="file" id="impFile" accept=".json" style="display:none" onchange="importJSON(this)">
-    <p style="font-size:12px;color:#9ca3af;margin-top:12px">提示：导入会与现有数据合并（按户ID去重）。花名册CSV可用 Excel / WPS 直接打开。</p>
+    <input type="file" id="impXls" accept=".csv,.xlsx,.xls" style="display:none" onchange="importXls(this)">
+    <p style="font-size:12px;color:#9ca3af;margin-top:12px">📥 <b>Excel批量导入</b>：先在地图上框出屋顶并给每户编上编号（点框→填编号），再把含编号的花名册 Excel 导入，数据会按编号自动挂到对应屋顶上。也支持没有地图框的编号行（会放在村中心，拖到对应房屋即可）。</p>
+  </div>
+</div>
+
+<!-- 区域信息 -->
+<div id="areaInfo" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="apanel">
+    <h3 style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">🗺️ 区域信息 <button class="btn small" onclick="document.getElementById('areaInfo').classList.remove('open')">关闭</button></h3>
+    <div id="areaBody"></div>
   </div>
 </div>
 
 <!-- 引导 -->
 <div id="guide">
   <div class="gpanel">
-    <h2>👋 欢迎使用檀园村务图</h2>
+    <h2>👋 欢迎使用檀园村务图 v2</h2>
     <ol>
-      <li>用两指（或鼠标拖动）移动地图，找到要做标记的房屋</li>
-      <li>点右上角 <b>➕ 标记房屋</b>，然后点一下那栋房子，就会打出标记并弹出信息表</li>
-      <li>填写户主、家庭成员、健康、收入、党员、补贴、合作社等，点保存</li>
-      <li>标记不准？编辑户信息时可点「📍 拖动调整位置」微调图钉</li>
-      <li>🏔️ <b>3D视角</b>按钮可倾斜地图看立体实景；站在村里点 <b>📍定位</b> 可直接飞到脚下</li>
-      <li>数据自动存在本机浏览器，<b>请定期点 💾数据 → 导出备份</b></li>
+      <li><b>✏️ 画区域</b>：逐点点击画出村界、组界、某家的田/山，点「闭合区域」命名保存（可中断，下次接着画）。画好的区域点左下角图例可显示/隐藏，点区域可改可删</li>
+      <li><b>🔍 识别屋顶</b>：把地图拉到要看的地块上空点它，自动框出屋顶（约九成准，误框点开即删）；漏的用 <b>📐 框屋顶</b> 手动拖一个框补上</li>
+      <li>点屋顶框或图钉 → 填<b>编号、组、户主、家庭成员、健康、收入、党员、补贴、合作社</b></li>
+      <li>有 Excel 花名册？💾数据 → 📥 Excel批量导入，按编号自动挂到屋顶上（先下载模板照着填）</li>
+      <li>🏛️ <b>村部</b>：点地图设一次，以后「🏠 回村」一键飞回村部；📍 定位 = 我现在站的位置</li>
+      <li>🏔️ 3D视角 倾斜看立体实景；数据自动存在本机，<b>请定期导出备份</b></li>
     </ol>
     <button class="btn pri" onclick="localStorage.setItem('tanyuan_guide','1');document.getElementById('guide').classList.remove('open')">开始使用</button>
   </div>
@@ -190,33 +240,66 @@ table.st th{background:#f1f5f9}
 
 <script>
 /* ============ 配置 ============ */
-var VILLAGE=[113.232,27.735]; // 漂沙井镇檀园村附近，可用📍定位或拖图精确到达
+var VILLAGE=[113.232,27.735]; // 漂沙井镇檀园村附近，可用📍定位精确到达
 var LS_KEY='tanyuan_v1';
 var RELATIONS=['户主','配偶','子','女','父','母','岳父','岳母','祖父','祖母','孙子','孙女','儿媳','女婿','兄弟','姐妹','其他'];
 var HEALTH=['健康','慢性病','残疾','重大疾病','体弱多病','其他'];
 var POLITICS=['群众','中共党员','预备党员','共青团员','民主党派','其他'];
+var AREA_TYPES=[['village','村界','#7c3aed'],['group','组界','#f97316'],['field','田','#16a34a'],['forest','山','#14532d'],['water','水域','#0ea5e9'],['other','其他','#475569']];
 
 /* ============ 数据 ============ */
 var DATA=load();
-function load(){try{var d=JSON.parse(localStorage.getItem(LS_KEY));if(d&&d.houses)return d;}catch(e){}return {houses:[]};}
+function load(){
+  var d=null;
+  try{d=JSON.parse(localStorage.getItem(LS_KEY));}catch(e){}
+  if(!d||!d.houses)d={houses:[]};
+  if(!d.polys)d.polys=[];
+  if(!d.draft)d.draft=null;
+  if(!d.hall)d.hall=null;
+  return d;
+}
 function save(){localStorage.setItem(LS_KEY,JSON.stringify(DATA));}
-function uid(){return 'h'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+function uid(){return (Math.random()<0.5?'h':'p')+Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
 
 /* ============ 地图 ============ */
 var map=new maplibregl.Map({
   container:'map',
   style:{version:8,sources:{
-    sat:{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],tileSize:256,maxzoom:19,attribution:'Esri World Imagery'},
-    lab:{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}'],tileSize:256,maxzoom:19}
+    sat:{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],tileSize:256,maxzoom:18,attribution:'Esri World Imagery'},
+    lab:{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}'],tileSize:256,maxzoom:18}
   },layers:[{id:'sat',type:'raster',source:'sat'},{id:'lab',type:'raster',source:'lab',paint:{'raster-opacity':0.9}}]},
-  center:VILLAGE,zoom:14.2,pitch:45,bearing:-20,attributionControl:false
+  center:VILLAGE,zoom:14.2,pitch:45,bearing:-20,attributionControl:false,maxZoom:19.5
 });
 map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'top-right');
 map.addControl(new maplibregl.ScaleControl({maxWidth:100}),'bottom-right');
+function emptyFC(){return {type:'FeatureCollection',features:[]};}
 map.on('load',function(){
+  // 屋顶框图层
+  map.addSource('roofs',{type:'geojson',data:roofsFC()});
+  var kcolor=['match',['get','k'],'jc','#ef4444','tp','#f59e0b','db','#3b82f6','bz','#10b981','#2563eb'];
+  map.addLayer({id:'roofs-f',type:'fill',source:'roofs',paint:{'fill-color':kcolor,'fill-opacity':.28}});
+  map.addLayer({id:'roofs-l',type:'line',source:'roofs',paint:{'line-color':kcolor,'line-width':2}});
+  // 区域图层
+  map.addSource('areas',{type:'geojson',data:areasFC()});
+  var tcolor=['match',['get','t'],'village','#7c3aed','group','#f97316','field','#16a34a','forest','#14532d','water','#0ea5e9','#475569'];
+  map.addLayer({id:'areas-f',type:'fill',source:'areas',paint:{'fill-color':tcolor,'fill-opacity':.18}});
+  map.addLayer({id:'areas-l',type:'line',source:'areas',paint:{'line-color':tcolor,'line-width':2.5,'line-dasharray':[3,1]}});
+  // 草稿(画笔)图层
+  map.addSource('draft',{type:'geojson',data:draftFC()});
+  map.addLayer({id:'draft-l',type:'line',source:'draft',paint:{'line-color':'#dc2626','line-width':3}});
+  map.addLayer({id:'draft-p',type:'circle',source:'draft',paint:{'circle-radius':5,'circle-color':'#fff','circle-stroke-width':2.5,'circle-stroke-color':'#dc2626'}});
+  // 框选拉框图层
+  map.addSource('boxing',{type:'geojson',data:emptyFC()});
+  map.addLayer({id:'boxing-l',type:'line',source:'boxing',paint:{'line-color':'#dc2626','line-width':2.5,'line-dasharray':[2,1]}});
+  applyAreaVis();
+  redrawAll();
   if(!localStorage.getItem('tanyuan_guide'))document.getElementById('guide').classList.add('open');
 });
-function goHome(){map.flyTo({center:VILLAGE,zoom:14.2,pitch:45,bearing:-20,duration:1200});}
+function goHome(){
+  var c=DATA.hall||VILLAGE,z=DATA.hall?17:14.2;
+  map.flyTo({center:c,zoom:z,pitch:DATA.hall?45:45,bearing:-20,duration:1200});
+  if(DATA.hall)showHint('已回到村部');
+}
 function pitchTo(p){map.easeTo({pitch:p,duration:600});}
 document.getElementById('btnLoc').onclick=function(){
   if(!navigator.geolocation){showHint('此浏览器不支持定位');return;}
@@ -227,28 +310,46 @@ document.getElementById('btnLoc').onclick=function(){
   },function(){showHint('定位失败，请检查是否允许定位权限');},{enableHighAccuracy:true});
 };
 
-/* ============ 添加模式 ============ */
-var addMode=false;
-document.getElementById('btnAdd').onclick=function(){
-  addMode=!addMode;
-  this.classList.toggle('on',addMode);
-  this.textContent=addMode?'✅ 点击地图放置标记':'➕ 标记房屋';
-  showHint(addMode?'点击地图上任意一栋房屋的位置':'');
-  map.getCanvas().style.cursor=addMode?'crosshair':'';
-};
+/* ============ 工具模式切换 ============ */
+var tool=null; // 'pin'|'pen'|'box'|'hall'
+function setTool(t){
+  tool=(tool===t)?null:t;
+  document.getElementById('btnAdd').classList.toggle('on',tool==='pin');
+  document.getElementById('btnAdd').textContent=tool==='pin'?'✅ 点击地图放置标记':'➕ 标记房屋';
+  document.getElementById('btnPen').classList.toggle('on',tool==='pen');
+  document.getElementById('btnBox').classList.toggle('on',tool==='box');
+  document.getElementById('btnHall').classList.toggle('on',tool==='hall');
+  document.getElementById('penPanel').classList.toggle('open',tool==='pen');
+  map.getCanvas().style.cursor=tool?'crosshair':'';
+  if(tool==='box'){map.dragPan.disable();}else{map.dragPan.enable();}
+  if(tool==='pin')showHint('点击地图上任意一栋房屋的位置');
+  if(tool==='box')showHint('按住拖拽，框住一个屋顶后松手');
+  if(tool==='pen')showHint(DATA.draft&&DATA.draft.length?'继续画：接着点击地图加点（从中断处继续）':'逐点点击地图画边界');
+  if(tool==='hall')showHint('点击村部所在位置');
+  if(tool===null)showHint('');
+}
+
+/* ============ 地图点击（打点/画笔/村部） ============ */
 map.on('click',function(e){
-  if(!addMode)return;
-  addMode=false;
-  var b=document.getElementById('btnAdd');
-  b.classList.remove('on');b.textContent='➕ 标记房屋';
-  map.getCanvas().style.cursor='';
-  var h=newHouse(e.lngLat.lng,e.lngLat.lat);
-  DATA.houses.push(h);save();
-  drawMarker(h);
-  openDrawer(h.id);
+  if(tool==='pin'){
+    setTool('pin'); // 关闭
+    var h=newHouse(e.lngLat.lng,e.lngLat.lat);
+    DATA.houses.push(h);save();
+    drawMarker(h);
+    openDrawer(h.id,true);
+  }else if(tool==='pen'){
+    if(!DATA.draft)DATA.draft=[];
+    DATA.draft.push([e.lngLat.lng,e.lngLat.lat]);
+    save();drawDraft();
+    if(DATA.draft.length===2)showHint('继续点击加线；画完点「✅ 闭合区域」');
+  }else if(tool==='hall'){
+    DATA.hall=[e.lngLat.lng,e.lngLat.lat];save();
+    setTool('hall');drawHall();
+    showHint('🏛️ 村部已设置！以后点「🏠 回村」直接飞回这里');
+  }
 });
 
-/* ============ 标记渲染 ============ */
+/* ============ 打点标记（图钉） ============ */
 var markers={};
 function pinClass(h){
   if(h.tags&&h.tags.indexOf('jiance')>=0)return 'jc';
@@ -266,10 +367,27 @@ function pinIcon(h){
 }
 function drawMarker(h){
   removeMarker(h.id);
+  if(h.bbox){ // 屋顶框：小圆编号标签（可拖动调整位置）
+    var el=document.createElement('div');
+    el.className='nolab'+(h.no?'':' empty');
+    el.textContent=h.no||'';
+    el.title=(h.no?'编号'+h.no+' · ':'')+(h.owner||h.label||'未命名');
+    el.onclick=function(ev){ev.stopPropagation();openDrawer(h.id);};
+    var cx=(h.bbox[0]+h.bbox[2])/2,cy=(h.bbox[1]+h.bbox[3])/2;
+    var mk=new maplibregl.Marker({element:el,draggable:true}).setLngLat([cx,cy]).addTo(map);
+    mk.on('dragend',function(){
+      var ll=mk.getLngLat();
+      var w=h.bbox[2]-h.bbox[0],ht=h.bbox[3]-h.bbox[1];
+      h.bbox=[ll.lng-w/2,ll.lat-ht/2,ll.lng+w/2,ll.lat+ht/2];
+      save();drawRoofs();
+    });
+    markers[h.id]=mk;
+    return;
+  }
   var el=document.createElement('div');
   el.className='pin '+pinClass(h);
   el.innerHTML='<span>'+pinIcon(h)+'</span>';
-  el.title=h.label||h.owner||'未命名';
+  el.title=(h.no?'编号'+h.no+' · ':'')+(h.label||h.owner||'未命名');
   el.onclick=function(ev){ev.stopPropagation();openDrawer(h.id);};
   var mk=new maplibregl.Marker({element:el,draggable:false}).setLngLat([h.lon,h.lat]).addTo(map);
   markers[h.id]=mk;
@@ -278,37 +396,333 @@ function removeMarker(id){if(markers[id]){markers[id].remove();delete markers[id
 function redrawAll(){
   Object.keys(markers).forEach(removeMarker);
   DATA.houses.forEach(drawMarker);
+  drawRoofs();drawAreas();drawDraft();drawHall();
 }
+/* 屋顶框 GeoJSON */
+function roofsFC(){
+  var f=DATA.houses.filter(function(h){return h.bbox;}).map(function(h){
+    return {type:'Feature',geometry:{type:'Polygon',coordinates:[[[h.bbox[0],h.bbox[1]],[h.bbox[2],h.bbox[1]],[h.bbox[2],h.bbox[3]],[h.bbox[0],h.bbox[3]],[h.bbox[0],h.bbox[1]]]]},properties:{id:h.id,k:pinClass(h),no:h.no||''}};
+  });
+  return {type:'FeatureCollection',features:f};
+}
+function drawRoofs(){var s=map.getSource('roofs');if(s)s.setData(roofsFC());}
+map.on('click','roofs-f',function(e){
+  var f=e.features[0];if(f)openDrawer(f.properties.id);
+});
+/* 区域 GeoJSON */
+function areasFC(){
+  var f=DATA.polys.map(function(p){
+    var ring=p.ring.slice();ring.push(ring[0]);
+    return {type:'Feature',geometry:{type:'Polygon',coordinates:[ring]},properties:{id:p.id,t:p.type,dash:p.type==='village'?[4,2]:[1,0]}};
+  });
+  return {type:'FeatureCollection',features:f};
+}
+function drawAreas(){var s=map.getSource('areas');if(s)s.setData(areasFC());}
+map.on('click','areas-f',function(e){
+  var f=e.features[0];if(!f)return;
+  var id=f.properties.id;
+  var p=null;DATA.polys.forEach(function(x){if(x.id===id)p=x;});
+  if(!p)return;
+  var tn={village:'村界',group:'组界',field:'田',forest:'山',water:'水域',other:'其他'}[p.type]||p.type;
+  document.getElementById('areaBody').innerHTML=
+    '<div class="frow"><div><label class="fl">名称</label><input type="text" id="a_name" value="'+esc(p.name)+'"></div>'+
+    '<div><label class="fl">类型</label><select id="a_type">'+AREA_TYPES.map(function(t){return '<option value="'+t[0]+'"'+(p.type===t[0]?' selected':'')+'>'+t[1]+'</option>';}).join('')+'</select></div></div>'+
+    '<textarea id="a_note" placeholder="备注（如：董大塘组 / 张三的责任田 3亩）" style="margin:8px 0">'+esc(p.note)+'</textarea>'+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+    '<button class="btn pri" onclick="areaSave(\''+p.id+'\')">💾 保存</button>'+
+    '<button class="btn" onclick="detectInPoly(\''+p.id+'\')">🔍 识别此区域内屋顶</button>'+
+    '<button class="btn del" style="background:#fee2e2;color:#b91c1c" onclick="areaDel(\''+p.id+'\')">🗑️ 删除区域</button></div>';
+  document.getElementById('areaInfo').classList.add('open');
+});
+function areaSave(id){
+  DATA.polys.forEach(function(p){if(p.id===id){p.name=document.getElementById('a_name').value.trim();p.type=document.getElementById('a_type').value;p.note=document.getElementById('a_note').value.trim();}});
+  save();drawAreas();document.getElementById('areaInfo').classList.remove('open');showHint('✅ 区域已保存');refreshLegend();
+}
+function areaDel(id){
+  if(!confirm('确定删除这个区域吗？（不影响房屋标记）'))return;
+  DATA.polys=DATA.polys.filter(function(p){return p.id!==id;});
+  save();drawAreas();document.getElementById('areaInfo').classList.remove('open');showHint('区域已删除');refreshLegend();
+}
+/* 区域显隐（图例点击） */
+var areaVis={village:1,group:1,field:1,forest:1,water:1,other:1};
+function applyAreaVis(){
+  var on=AREA_TYPES.filter(function(t){return areaVis[t[0]];}).map(function(t){return t[0];});
+  var fl=['in',['get','t'],['literal',on]];
+  if(map.getLayer('areas-f')){map.setFilter('areas-f',fl);map.setFilter('areas-l',fl);}
+}
+function toggleArea(t){
+  areaVis[t]=!areaVis[t];applyAreaVis();refreshLegend();
+}
+function refreshLegend(){
+  var lg=document.getElementById('legend');
+  while(lg.querySelectorAll('.li.tg').length)lg.querySelectorAll('.li.tg')[0].remove();
+  var counts={};DATA.polys.forEach(function(p){counts[p.type]=(counts[p.type]||0)+1;});
+  AREA_TYPES.forEach(function(t){
+    var d=document.createElement('div');
+    d.className='li tg'+(areaVis[t[0]]?'':' off');
+    d.innerHTML='<span class="sw" style="background:'+t[2]+'"></span>'+t[1]+(counts[t[0]]?'('+counts[t[0]]+')':'');
+    d.onclick=function(){toggleArea(t[0]);};
+    lg.appendChild(d);
+  });
+}
+/* 草稿(画笔) */
+function draftFC(){
+  if(!DATA.draft||!DATA.draft.length)return emptyFC();
+  var feats=[];
+  if(DATA.draft.length>1)feats.push({type:'Feature',geometry:{type:'LineString',coordinates:DATA.draft},properties:{}});
+  DATA.draft.forEach(function(p){feats.push({type:'Feature',geometry:{type:'Point',coordinates:p},properties:{}});});
+  return {type:'FeatureCollection',features:feats};
+}
+function drawDraft(){var s=map.getSource('draft');if(s)s.setData(draftFC());}
+function penUndo(){if(DATA.draft&&DATA.draft.length){DATA.draft.pop();save();drawDraft();}}
+function penClear(){if(DATA.draft&&DATA.draft.length&&confirm('清除当前未闭合的草稿？')){DATA.draft=[];save();drawDraft();}}
+function penClose(){
+  if(!DATA.draft||DATA.draft.length<3){showHint('至少要 3 个点才能围成区域');return;}
+  var names=[];DATA.polys.forEach(function(p){if(p.name)names.push(p.name);});
+  var html='<div class="frow"><div><label class="fl">区域名称（如：檀园村 / 董大塘组 / 张三的田）</label><input type="text" id="p_name" list="p_names"><datalist id="p_names">'+names.map(function(n){return '<option value="'+esc(n)+'">';}).join('')+'</datalist></div></div>'+
+  '<div class="frow"><div><label class="fl">类型</label><select id="p_type">'+AREA_TYPES.map(function(t){return '<option value="'+t[0]+'">'+t[1]+'</option>';}).join('')+'</select></div></div>'+
+  '<textarea id="p_note" placeholder="备注（面积、权属等）"></textarea>'+
+  '<div style="display:flex;gap:8px;margin-top:10px"><button class="btn pri" onclick="penSave()">💾 保存区域</button><button class="btn" onclick="penBack()">返回继续画</button></div>';
+  document.getElementById('penTip').innerHTML=html;
+}
+function penBack(){document.getElementById('penTip').innerHTML='✏️ 逐点点击地图画边界：点两个点连成线，一路点下去即可。<b>中断不怕</b>，下次点「画区域」接着末尾继续画。';}
+function penSave(){
+  var name=document.getElementById('p_name').value.trim();
+  if(!name){showHint('请填写区域名称');return;}
+  var ring=DATA.draft.slice();ring.push(ring[0]);
+  DATA.polys.push({id:uid(),name:name,type:document.getElementById('p_type').value,note:document.getElementById('p_note').value.trim(),ring:ring});
+  DATA.draft=null;save();
+  drawAreas();drawDraft();refreshLegend();penBack();
+  showHint('✅ 区域「'+name+'」已保存');
+}
+/* 村部 */
+var hallMk=null;
+function drawHall(){
+  if(hallMk){hallMk.remove();hallMk=null;}
+  if(!DATA.hall)return;
+  var el=document.createElement('div');el.className='hallmk';el.textContent='🏛️';el.title='村部';
+  hallMk=new maplibregl.Marker({element:el}).setLngLat(DATA.hall).addTo(map);
+}
+document.getElementById('btnHall').onclick=function(){
+  if(DATA.hall&&!confirm('村部已设置过，重新设置位置？'))return;
+  setTool('hall');
+};
+document.getElementById('btnPen').onclick=function(){setTool('pen');};
+document.getElementById('btnBox').onclick=function(){setTool('box');};
+
+/* ============ 手动框选屋顶 ============ */
+var boxing=null;
+map.on('mousedown',function(e){
+  if(tool!=='box')return;
+  boxing={w:e.lngLat.lng,s:e.lngLat.lat,e:e.lngLat.lng,n:e.lngLat.lat};
+});
+map.on('mousemove',function(e){
+  if(!boxing)return;
+  boxing.e=e.lngLat.lng;boxing.n=e.lngLat.lat;
+  map.getSource('boxing').setData({type:'Feature',geometry:{type:'Polygon',coordinates:[[[boxing.w,boxing.s],[boxing.e,boxing.s],[boxing.e,boxing.n],[boxing.w,boxing.n],[boxing.w,boxing.s]]]}});
+});
+map.on('mouseup',function(e){
+  if(!boxing)return;
+  var b=boxing;boxing=null;
+  map.getSource('boxing').setData(emptyFC());
+  var w=Math.min(b.w,b.e),e2=Math.max(b.w,b.e),s=Math.min(b.s,b.n),n2=Math.max(b.s,b.n);
+  // 屏幕上至少12像素
+  var p1=map.project([w,s]),p2=map.project([e2,n2]);
+  if(Math.abs(p2.x-p1.x)<12||Math.abs(p2.y-p1.y)<12){showHint('框太小了，拖大一点');return;}
+  var h=newHouse((w+e2)/2,(s+n2)/2);
+  h.bbox=[w,s,e2,n2];
+  DATA.houses.push(h);save();
+  drawMarker(h);drawRoofs();
+  openDrawer(h.id,true);
+});
+/* 触屏框选 */
+var cv=map.getCanvas();
+cv.addEventListener('touchstart',function(ev){
+  if(tool!=='box')return;
+  ev.preventDefault();
+  var t=ev.touches[0];
+  var ll=map.unproject([t.clientX,t.clientY]);
+  boxing={w:ll.lng,s:ll.lat,e:ll.lng,n:ll.lat};
+},{passive:false});
+cv.addEventListener('touchmove',function(ev){
+  if(!boxing)return;
+  ev.preventDefault();
+  var t=ev.touches[0];
+  var ll=map.unproject([t.clientX,t.clientY]);
+  boxing.e=ll.lng;boxing.n=ll.lat;
+  map.getSource('boxing').setData({type:'Feature',geometry:{type:'Polygon',coordinates:[[[boxing.w,boxing.s],[boxing.e,boxing.s],[boxing.e,boxing.n],[boxing.w,boxing.n],[boxing.w,boxing.s]]]}});
+},{passive:false});
+cv.addEventListener('touchend',function(ev){
+  if(!boxing)return;
+  ev.preventDefault();
+  var b=boxing;boxing=null;
+  map.getSource('boxing').setData(emptyFC());
+  var w=Math.min(b.w,b.e),e2=Math.max(b.w,b.e),s=Math.min(b.s,b.n),n2=Math.max(b.s,b.n);
+  var p1=map.project([w,s]),p2=map.project([e2,n2]);
+  if(Math.abs(p2.x-p1.x)<12||Math.abs(p2.y-p1.y)<12){showHint('框太小了，拖大一点');return;}
+  var h=newHouse((w+e2)/2,(s+n2)/2);
+  h.bbox=[w,s,e2,n2];
+  DATA.houses.push(h);save();
+  drawMarker(h);drawRoofs();
+  openDrawer(h.id,true);
+},{passive:false});
+
+/* ============ 屋顶自动识别 ============ */
+var TZ=18;
+function lon2px(lon,z){return (lon+180)/360*Math.pow(2,z)*256;}
+function lat2py(lat,z){var s=Math.sin(lat*Math.PI/180);return (0.5-Math.log((1+s)/(1-s))/(4*Math.PI))*Math.pow(2,z)*256;}
+function px2lon(px,z){return px/256/Math.pow(2,z)*360-180;}
+function py2lat(py,z){var n=Math.PI-2*Math.PI*py/256/Math.pow(2,z);return 180/Math.PI*Math.atan(0.5*(Math.exp(n)-Math.exp(-n)));}
+function loadImg(url){return new Promise(function(res,rej){var im=new Image();im.crossOrigin='anonymous';im.onload=function(){res(im);};im.onerror=function(){rej(new Error(url));};im.src=url;});}
+function bboxOf(polyId){
+  var p=null;DATA.polys.forEach(function(x){if(x.id===polyId)p=x;});
+  if(!p)return null;
+  var w=999,s=999,e=-999,n=-999;
+  p.ring.forEach(function(pt){w=Math.min(w,pt[0]);e=Math.max(e,pt[0]);s=Math.min(s,pt[1]);n=Math.max(n,pt[1]);});
+  return [w,s,e,n];
+}
+document.getElementById('btnDetect').onclick=function(){
+  var b=map.getBounds();
+  detectRoofs([b.getWest(),b.getSouth(),b.getEast(),b.getNorth()]);
+};
+function detectInPoly(id){var b=bboxOf(id);document.getElementById('areaInfo').classList.remove('open');if(b)detectRoofs(b);}
+function detectRoofs(bb){
+  var gx0=Math.floor(lon2px(bb[0],TZ)/256),gx1=Math.floor(lon2px(bb[2],TZ)/256);
+  var gy0=Math.floor(lat2py(bb[3],TZ)/256),gy1=Math.floor(lat2py(bb[1],TZ)/256);
+  var nx=gx1-gx0+1,ny=gy1-gy0+1;
+  if(nx*ny>49){showHint('范围太大（'+nx+'×'+ny+' 块），请拉近地图或先画区域后在其内识别');return;}
+  if(nx*ny<1)return;
+  showHint('🔍 正在识别屋顶…（拉取'+nx+'×'+ny+'块影像）');
+  var ox=gx0*256,oy=gy0*256;
+  var cvs=document.createElement('canvas');cvs.width=nx*256;cvs.height=ny*256;
+  var ctx=cvs.getContext('2d');
+  var seq=[];
+  for(var x=gx0;x<=gx1;x++)for(var y=gy0;y<=gy1;y++)seq.push([x,y]);
+  Promise.all(seq.map(function(c){
+    return loadImg('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/'+TZ+'/'+c[1]+'/'+c[0]).then(function(im){
+      ctx.drawImage(im,(c[0]-gx0)*256,(c[1]-gy0)*256);
+    }).catch(function(){});
+  })).then(function(){
+    setTimeout(function(){
+      try{
+        var boxes=detectFromCanvas(ctx,cvs.width,cvs.height,ox,oy);
+        var added=0,skip=0;
+        boxes.forEach(function(bx){
+          // 与已有标记去重
+          var dup=DATA.houses.some(function(h){
+            if(!h.bbox&&h.lon!==undefined){
+              return bx[0]<=h.lon&&h.lon<=bx[2]&&bx[1]<=h.lat&&h.lat<=bx[3];
+            }
+            if(!h.bbox)return false;
+            var ix=Math.min(bx[2],h.bbox[2])-Math.max(bx[0],h.bbox[0]);
+            var iy=Math.min(bx[3],h.bbox[3])-Math.max(bx[1],h.bbox[1]);
+            if(ix<=0||iy<=0)return false;
+            var inter=ix*iy;
+            var a1=(bx[2]-bx[0])*(bx[3]-bx[1]),a2=(h.bbox[2]-h.bbox[0])*(h.bbox[3]-h.bbox[1]);
+            return inter/Math.min(a1,a2)>0.2;
+          });
+          if(dup){skip++;return;}
+          var h=newHouse((bx[0]+bx[2])/2,(bx[1]+bx[3])/2);
+          h.bbox=bx;DATA.houses.push(h);added++;
+        });
+        save();redrawAll();
+        showHint('✅ 识别出 '+added+' 个屋顶'+(skip?('，跳过 '+skip+' 个已有标记'):'')+'；点框填写编号/户主；误框点开→删除');
+      }catch(err){showHint('识别失败：'+err.message);}
+    },30);
+  });
+}
+/* 与沙箱原型一致的检测算法（v3参数） */
+function detectFromCanvas(ctx,W,H,ox,oy){
+  var img=ctx.getImageData(0,0,W,H).data;
+  var cls=new Uint8Array(W*H);
+  function classify(r,g,b){
+    var mx=Math.max(r,g,b),mn=Math.min(r,g,b);
+    if(g-r>12&&g-b>8)return 0;
+    if(r>75&&r-g>32&&r-b>32)return 1;
+    if(mn>165&&mx-mn<45)return 2;
+    if(b>90&&b-r>15&&b-g>10)return 3;
+    var avg=(r+g+b)/3;
+    if(Math.abs(r-g)<14&&Math.abs(g-b)<16&&Math.abs(r-b)<24){
+      if(avg>62&&avg<175)return 4;
+      if(avg>48&&avg<=62)return 5;
+    }
+    return 0;
+  }
+  for(var i=0,p=0;i<W*H;i++,p+=4)cls[i]=classify(img[p],img[p+1],img[p+2]);
+  var visited=new Uint8Array(W*H);
+  var boxes=[];
+  var stack=new Int32Array(W*H);
+  for(var y=0;y<H;y++)for(var x=0;x<W;x++){
+    var i0=y*W+x;
+    var c=cls[i0];
+    if(c===0||visited[i0])continue;
+    var sp=0;stack[sp++]=i0;visited[i0]=1;
+    var minx=x,maxx=x,miny=y,maxy=y,area=0;
+    while(sp>0){
+      var ci=stack[--sp];
+      var cx=ci%W,cy=(ci-cx)/W;
+      area++;
+      if(cx<minx)minx=cx;if(cx>maxx)maxx=cx;
+      if(cy<miny)miny=cy;if(cy>maxy)maxy=cy;
+      if(cx+1<W&&!visited[ci+1]&&cls[ci+1]===c){visited[ci+1]=1;stack[sp++]=ci+1;}
+      if(cx-1>=0&&!visited[ci-1]&&cls[ci-1]===c){visited[ci-1]=1;stack[sp++]=ci-1;}
+      if(cy+1<H&&!visited[ci+W]&&cls[ci+W]===c){visited[ci+W]=1;stack[sp++]=ci+W;}
+      if(cy-1>=0&&!visited[ci-W]&&cls[ci-W]===c){visited[ci-W]=1;stack[sp++]=ci-W;}
+    }
+    var w=maxx-minx+1,h=maxy-miny+1;
+    if(c===4){ if(area<75||area>700)continue; if(w<8||h<8||w>55||h>55)continue; if(area/(w*h)<0.52)continue; }
+    else if(c===5){ if(area<80||area>500)continue; if(w<9||h<9||w>45||h>45)continue; if(area/(w*h)<0.6)continue; }
+    else if(c===2){ if(area<70||area>900)continue; if(w<7||h<7||w>60||h>60)continue; if(area/(w*h)<0.45)continue; }
+    else { if(area<60||area>1400)continue; if(w<6||h<6||w>75||h>75)continue; if(area/(w*h)<0.38)continue; }
+    var asp=w/h;
+    if(asp<0.22||asp>4.5)continue;
+    boxes.push({x0:ox+minx,y0:oy+miny,x1:ox+maxx,y1:oy+maxy,area:area,cls:c});
+  }
+  function iou(a,b){
+    var ix0=Math.max(a.x0,b.x0),iy0=Math.max(a.y0,b.y0),ix1=Math.min(a.x1,b.x1),iy1=Math.min(a.y1,b.y1);
+    if(ix1<=ix0||iy1<=iy0)return 0;
+    return (ix1-ix0)*(iy1-iy0)/(a.area+b.area-(ix1-ix0)*(iy1-iy0));
+  }
+  boxes.sort(function(a,b){return b.area-a.area;});
+  var keep=[];
+  boxes.forEach(function(b){for(var k=0;k<keep.length;k++){if(iou(b,keep[k])>=0.18)return;}keep.push(b);});
+  return keep.map(function(b){
+    return [round6(px2lon(b.x0,TZ)),round6(py2lat(b.y1,TZ)),round6(px2lon(b.x1,TZ)),round6(py2lat(b.y0,TZ))];
+  });
+}
+function round6(v){return Math.round(v*1e6)/1e6;}
 
 /* ============ 抽屉表单 ============ */
-var editing=null; // house object (reference into DATA)
+var editing=null,editingNew=false;
 function newHouse(lon,lat){
-  return {id:uid(),lon:lon,lat:lat,label:'',owner:'',phone:'',
+  return {id:uid(),lon:lon,lat:lat,no:'',group:'',label:'',owner:'',phone:'',
     members:[{name:'',rel:'户主',sex:'男',age:'',health:'健康',income:'',politics:'群众',job:''}],
     tags:[],subsidies:[],biz:{type:'none',name:'',note:''},note:''};
 }
 function findH(id){for(var i=0;i<DATA.houses.length;i++)if(DATA.houses[i].id===id)return DATA.houses[i];return null;}
-
 var TAGDEFS=[['tuopin','脱贫户'],['jiance','监测户'],['dibao','低保户'],['wubao','特困/五保'],['canji','残疾家庭'],['jun','军烈属']];
 var BIZDEFS=[['none','无'],['coop','合作社'],['company','公司'],['farm','家庭农场'],['shop','个体工商户']];
-
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function opt(arr,sel){return arr.map(function(o){return '<option'+(o===sel?' selected':'')+'>'+o+'</option>';}).join('');}
-
-function openDrawer(id){
+function groupNames(){var s=[];DATA.polys.forEach(function(p){if(p.type==='group'&&p.name&&s.indexOf(p.name)<0)s.push(p.name);});return s;}
+function openDrawer(id,isNew){
   var h=findH(id);if(!h)return;
-  editing=h;
-  document.getElementById('dTitle').textContent='🏠 '+(h.owner||h.label||'新建户档');
+  editing=h;editingNew=!!isNew;
+  document.getElementById('dTitle').textContent='🏠 '+(h.owner||h.label||(h.no?'编号 '+h.no:'新建户档'));
   var tagsHtml=TAGDEFS.map(function(t){return '<div class="chip'+(h.tags&&h.tags.indexOf(t[0])>=0?' on':'')+'" data-tag="'+t[0]+'" onclick="this.classList.toggle(\'on\')">'+t[1]+'</div>';}).join('');
   var memHtml=h.members.map(function(m,i){return memberRow(m,i);}).join('');
   var subHtml=h.subsidies.map(function(s,i){return subRow(s,i);}).join('');
+  var gnames=groupNames();
   document.getElementById('dBody').innerHTML=
   '<div class="sec"><h4>基本信息</h4>'+
-    '<div class="frow"><div><label class="fl">门牌 / 别名（如：董大塘组12号）</label><input type="text" id="f_label" value="'+esc(h.label)+'" placeholder="组名+门牌号"></div></div>'+
+    '<div class="frow"><div><label class="fl">房屋编号（Excel导入按此匹配）</label><input type="text" id="f_no" value="'+esc(h.no)+'" placeholder="如 1、2、A3…"></div>'+
+    '<div><label class="fl">所属组</label><input type="text" id="f_group" value="'+esc(h.group)+'" list="g_list" placeholder="如 董大塘组"><datalist id="g_list">'+gnames.map(function(n){return '<option value="'+esc(n)+'">';}).join('')+'</datalist></div></div>'+
+    '<div class="frow"><div><label class="fl">门牌 / 别名</label><input type="text" id="f_label" value="'+esc(h.label)+'" placeholder="组名+门牌号"></div></div>'+
     '<div class="frow"><div><label class="fl">户主姓名</label><input type="text" id="f_owner" value="'+esc(h.owner)+'"></div>'+
     '<div><label class="fl">联系电话</label><input type="tel" id="f_phone" value="'+esc(h.phone)+'"></div></div>'+
     '<div class="frow"><div style="flex:none;min-width:auto"><button class="btn small" onclick="toggleDrag()">📍 拖动调整位置</button></div>'+
     '<div><label class="fl">坐标</label><input type="text" id="f_coord" readonly value="'+h.lon.toFixed(6)+', '+h.lat.toFixed(6)+'" style="background:#f1f5f9;font-size:12px"></div></div>'+
+    (h.bbox?'<p style="font-size:11px;color:#9ca3af">这是屋顶框，可拖动圆形编号标签调整位置；拖动地图中该圆点到正确屋顶即可。</p>':'')+
   '</div>'+
   '<div class="sec"><h4>家庭类型标签</h4><div class="chips" id="f_tags">'+tagsHtml+'</div></div>'+
   '<div class="sec"><h4>家庭成员 <button class="btn small" onclick="addMember()">➕ 加人</button></h4><div id="f_members">'+memHtml+'</div></div>'+
@@ -340,9 +754,25 @@ function subRow(s,i){
 function addMember(){var w=document.createElement('div');w.innerHTML=memberRow({name:'',rel:'其他',sex:'男',age:'',health:'健康',income:'',politics:'群众',job:''},0);document.getElementById('f_members').appendChild(w.firstChild);}
 function delMember(btn){var rows=document.querySelectorAll('#f_members .mrow');if(rows.length<=1){showHint('至少保留一个成员（户主）');return;}btn.parentNode.remove();}
 function addSub(){var w=document.createElement('div');w.innerHTML=subRow({name:'',amount:'',note:''},0);document.getElementById('f_subs').appendChild(w.firstChild);}
-function closeDrawer(){document.getElementById('drawer').classList.remove('open');stopDrag();editing=null;}
+function closeDrawer(){
+  if(editing&&editingNew){
+    collect();
+    if(!editing.owner&&!editing.label&&!editing.no){ // 新建但完全没填 → 自动删除空标记
+      var id=editing.id;
+      DATA.houses=DATA.houses.filter(function(x){return x.id!==id;});
+      save();removeMarker(id);drawRoofs();
+      showHint('已取消，未填写的空标记已移除');
+      document.getElementById('drawer').classList.remove('open');
+      stopDrag();editing=null;editingNew=false;return;
+    }
+  }
+  document.getElementById('drawer').classList.remove('open');
+  stopDrag();editing=null;editingNew=false;
+}
 function collect(){
   var h=editing;if(!h)return;
+  h.no=document.getElementById('f_no').value.trim();
+  h.group=document.getElementById('f_group').value.trim();
   h.label=document.getElementById('f_label').value.trim();
   h.owner=document.getElementById('f_owner').value.trim();
   h.phone=document.getElementById('f_phone').value.trim();
@@ -359,7 +789,7 @@ function collect(){
 }
 document.getElementById('btnSave').onclick=function(){
   var h=collect();if(!h)return;
-  if(!h.owner&&!h.label){showHint('请至少填写户主姓名或门牌');return;}
+  if(!h.owner&&!h.label&&!h.no){showHint('请至少填写编号、户主姓名或门牌');return;}
   save();redrawAll();closeDrawer();showHint('✅ 已保存');
 };
 document.getElementById('btnDel').onclick=function(){
@@ -367,7 +797,7 @@ document.getElementById('btnDel').onclick=function(){
   if(!confirm('确定删除这户的标记和全部信息吗？'))return;
   var id=editing.id;
   DATA.houses=DATA.houses.filter(function(x){return x.id!==id;});
-  save();removeMarker(id);closeDrawer();showHint('已删除');
+  save();removeMarker(id);drawRoofs();closeDrawer();showHint('已删除');
 };
 /* 拖动调整位置 */
 var dragging=false;
@@ -377,10 +807,14 @@ function toggleDrag(){
   dragging=!dragging;
   mk.setDraggable(dragging);
   if(dragging){
-    showHint('图钉已解锁，直接拖动它调整位置，调好后点保存');
+    showHint('标记已解锁，直接拖动它调整位置，调好后点保存');
     mk.on('dragend',function(){
       var ll=mk.getLngLat();
-      editing.lon=ll.lng;editing.lat=ll.lat;
+      if(editing&&editing.bbox){
+        var w=editing.bbox[2]-editing.bbox[0],ht=editing.bbox[3]-editing.bbox[1];
+        editing.bbox=[ll.lng-w/2,ll.lat-ht/2,ll.lng+w/2,ll.lat+ht/2];
+      }
+      if(editing){editing.lon=ll.lng;editing.lat=ll.lat;}
       var c=document.getElementById('f_coord');if(c)c.value=ll.lng.toFixed(6)+', '+ll.lat.toFixed(6);
     });
   }else{showHint('位置已锁定');}
@@ -393,11 +827,18 @@ document.getElementById('search').addEventListener('input',function(){
   var box=document.getElementById('results');
   if(!q){box.style.display='none';return;}
   var hits=DATA.houses.filter(function(h){
-    if((h.owner||'').indexOf(q)>=0||(h.label||'').indexOf(q)>=0)return true;
+    if((h.owner||'').indexOf(q)>=0||(h.label||'').indexOf(q)>=0||(h.no||'').indexOf(q)>=0||(h.group||'').indexOf(q)>=0)return true;
     return (h.members||[]).some(function(m){return (m.name||'').indexOf(q)>=0;});
   });
   if(!hits.length){box.innerHTML='<div class="ritem" style="color:#9ca3af">未找到「'+esc(q)+'」，试试其他关键词</div>';box.style.display='block';return;}
-  box.innerHTML=hits.map(function(h){return '<div class="ritem" onclick="flyTo(\''+h.id+'\')"><div><b>'+esc(h.owner||h.label||'未命名')+'</b><div class="tags">'+tagsOf(h)+'</div></div><span style="color:#9ca3af">›</span></div>';}).join('');
+  box.innerHTML=hits.map(function(h){
+    var sub=[];
+    if(h.no)sub.push('编号'+h.no);
+    if(h.group)sub.push(h.group);
+    return '<div class="ritem" onclick="flyTo(\''+h.id+'\')"><div><b>'+esc(h.owner||h.label||(h.no?'#'+h.no:'未命名'))+'</b>'+
+    (sub.length?'<div class="sub">'+esc(sub.join(' · '))+'</div>':'')+
+    '<div class="tags">'+tagsOf(h)+'</div></div><span style="color:#9ca3af">›</span></div>';
+  }).join('');
   box.style.display='block';
 });
 function tagsOf(h){
@@ -407,7 +848,7 @@ function tagsOf(h){
   if(h.biz&&h.biz.type!=='none'&&h.biz.name)out+='<span class="tag biz">'+esc(h.biz.name)+'</span>';
   return out;
 }
-function flyTo(id){document.getElementById('results').style.display='none';map.flyTo({center:[findH(id).lon,findH(id).lat],zoom:18,duration:1200});openDrawer(id);}
+function flyTo(id){var h=findH(id);if(!h)return;document.getElementById('results').style.display='none';map.flyTo({center:[h.lon,h.lat],zoom:18,duration:1200});openDrawer(id);}
 document.getElementById('search').addEventListener('blur',function(){setTimeout(function(){document.getElementById('results').style.display='none';},250);});
 
 /* ============ 统计 ============ */
@@ -422,6 +863,11 @@ document.getElementById('btnStats').onclick=function(){
   var totalInc=incomes.reduce(function(a,b){return a+b;},0);
   var subs=0;hs.forEach(function(h){(h.subsidies||[]).forEach(function(s){subs+=parseFloat(s.amount)||0;});});
   var byType={};bizs.forEach(function(h){var t=BIZDEFS.filter(function(b){return b[0]===h.biz.type;})[0];byType[t[1]]=(byType[t[1]]||0)+1;});
+  var noNo=hs.filter(function(h){return h.bbox&&!h.no;}).length;
+  /* 按组统计 */
+  var gs={};
+  hs.forEach(function(h){var g=h.group||'未分组';if(!gs[g])gs[g]={hh:0,pp:0};gs[g].hh++;gs[g].pp+=(h.members||[]).filter(function(m){return m.name;}).length;});
+  var gKeys=Object.keys(gs).sort();
   document.getElementById('statsBody').innerHTML=
   '<div class="grid">'+
   kpi(hs.length,'登记农户')+kpi(allM.length,'登记人口')+kpi(cnt('tuopin'),'脱贫户','warn')+
@@ -429,6 +875,9 @@ document.getElementById('btnStats').onclick=function(){
   kpi(party,'党员人数','bad')+kpi(bizs.length,'经营主体','good')+kpi(subs,'补贴合计(元/年)','good')+
   (allM.length?kpi(Math.round(totalInc/allM.length),'人均年收入(元)'):'')+
   '</div>'+
+  (noNo?'<p style="font-size:12px;color:#c2410c;margin-top:8px">⚠️ 还有 '+noNo+' 个屋顶框未编号（点框填编号，方便Excel导入）</p>':'')+
+  '<table class="st"><tr><th>组别</th><th>户数</th><th>人口</th></tr>'+
+  (gKeys.length>1||gKeys[0]!=='未分组'?gKeys.map(function(k){return '<tr><td>'+esc(k)+'</td><td>'+gs[k].hh+'</td><td>'+gs[k].pp+'</td></tr>';}).join(''):'<tr><td colspan="3" style="color:#9ca3af">暂未分组</td></tr>')+'</table>'+
   '<table class="st"><tr><th>健康状况</th><th>人数</th><th>健康状况</th><th>人数</th></tr>'+
   '<tr><td>健康</td><td>'+hc('健康')+'</td><td>慢性病</td><td>'+hc('慢性病')+'</td></tr>'+
   '<tr><td>残疾</td><td>'+hc('残疾')+'</td><td>重大疾病</td><td>'+hc('重大疾病')+'</td></tr>'+
@@ -457,14 +906,16 @@ function importJSON(inp){
       if(!d.houses)throw 0;
       var ids={};DATA.houses.forEach(function(h){ids[h.id]=1;});
       var n=0;d.houses.forEach(function(h){if(!ids[h.id]){DATA.houses.push(h);n++;}});
-      save();redrawAll();showHint('✅ 导入完成，新增 '+n+' 户（重复的未覆盖）');
+      if(d.polys){var pids={};DATA.polys.forEach(function(p){pids[p.id]=1;});d.polys.forEach(function(p){if(!pids[p.id]){DATA.polys.push(p);}});}
+      if(d.hall&&!DATA.hall)DATA.hall=d.hall;
+      save();redrawAll();refreshLegend();showHint('✅ 导入完成，新增 '+n+' 户（重复的未覆盖）');
       document.getElementById('dataM').style.display='none';
     }catch(e){alert('文件格式不对，导入失败');}
   };
   r.readAsText(f);inp.value='';
 }
 function exportCSV(){
-  var rows=[['门牌','户主','电话','成员姓名','关系','性别','年龄','健康状况','政治面貌','年收入(元)','就业','家庭类型','经营主体','补贴','坐标','备注']];
+  var rows=[['编号','组','门牌','户主','电话','成员姓名','关系','性别','年龄','健康状况','政治面貌','年收入(元)','就业','家庭类型','经营主体','补贴','坐标','备注']];
   var tmap={tuopin:'脱贫户',jiance:'监测户',dibao:'低保户',wubao:'特困',canji:'残疾家庭',jun:'军烈属'};
   DATA.houses.forEach(function(h){
     var tags=(h.tags||[]).map(function(t){return tmap[t]||t;}).join('/');
@@ -472,7 +923,7 @@ function exportCSV(){
     var subs=(h.subsidies||[]).map(function(s){return (s.name||'')+(s.amount?'('+s.amount+'元)':'');}).join('；');
     var ms=h.members&&h.members.length?h.members:[{name:''}];
     ms.forEach(function(m){
-      rows.push([h.label,h.owner,h.phone,m.name,m.rel,m.sex,m.age,m.health,m.politics,m.income,m.job,tags,biz,subs,h.lon.toFixed(6)+','+h.lat.toFixed(6),h.note]);
+      rows.push([h.no,h.group,h.label,h.owner,h.phone,m.name,m.rel,m.sex,m.age,m.health,m.politics,m.income,m.job,tags,biz,subs,h.lon.toFixed(6)+','+h.lat.toFixed(6),h.note]);
     });
   });
   var csv='\ufeff'+rows.map(function(r){return r.map(function(c){return '"'+String(c==null?'':c).replace(/"/g,'""')+'"';}).join(',');}).join('\r\n');
@@ -480,12 +931,162 @@ function exportCSV(){
   showHint('花名册已下载，可用Excel打开');
 }
 function clearAll(){
-  if(!confirm('⚠️ 确定清空全部户档数据？此操作不可恢复！\n建议先导出备份。'))return;
+  if(!confirm('⚠️ 确定清空全部户档和区域数据？此操作不可恢复！\n建议先导出备份。'))return;
   if(!confirm('再次确认：真的要清空全部数据？'))return;
-  DATA={houses:[]};save();redrawAll();showHint('已清空');
+  DATA={houses:[],polys:[],draft:null,hall:null};save();redrawAll();refreshLegend();showHint('已清空');
   document.getElementById('dataM').style.display='none';
 }
 document.getElementById('btnHelp').onclick=function(){document.getElementById('guide').classList.add('open');};
+
+/* ============ Excel 批量导入 ============ */
+var TPL_HEAD=['编号','户主','电话','组','门牌','成员姓名','与户主关系','性别','年龄','政治面貌','健康状况','年收入(元)','就业','家庭类型','补贴项目','补贴金额(元/年)','经营主体类型','经营主体名称','备注'];
+function dlTemplate(){
+  var rows=[TPL_HEAD,
+    ['1','张三','13800000000','董大塘组','董大塘组12号','张三','户主','男','55','中共党员','慢性病','12000','务农','脱贫户','耕地地力保护补贴','800','家庭农场','檀园种植农场',''],
+    ['1','','','','','张三妻','配偶','女','53','群众','健康','5000','家务','','','','','',''],
+    ['2','李四','','庙家组','','李四','户主','男','40','群众','健康','30000','务工','监测户','低保金','2400','','','']
+  ];
+  var csv='\ufeff'+rows.map(function(r){return r.map(function(c){return '"'+String(c==null?'':c).replace(/"/g,'""')+'"';}).join(',');}).join('\r\n');
+  dl('檀园村导入模板.csv',csv,'text/csv');
+  showHint('模板已下载，用Excel打开照着填（同编号多行=同一户多人）');
+}
+var HMAP={'编号':'no','房号':'no','户主':'owner','户主姓名':'owner','电话':'phone','联系电话':'phone','手机':'phone','组':'group','村组':'group','小组':'group','组别':'group','门牌':'label','门牌号':'label','别名':'label','成员姓名':'mname','姓名':'mname','人口姓名':'mname','关系':'rel','与户主关系':'rel','性别':'sex','年龄':'age','政治面貌':'politics','健康状况':'health','健康':'health','年收入':'income','年收入(元)':'income','收入':'income','就业':'job','就业就学':'job','职业':'job','家庭类型':'tags','标签':'tags','类型':'tags','补贴项目':'sname','补贴':'sname','补贴名称':'sname','补贴金额':'samount','补贴金额(元/年)':'samount','补贴金额(元)':'samount','经营主体类型':'biztype','经营主体名称':'bizname','备注':'note'};
+var TAGREV={'脱贫户':'tuopin','脱贫':'tuopin','监测户':'jiance','监测':'jiance','低保户':'dibao','低保':'dibao','特困':'wubao','五保':'wubao','特困/五保':'wubao','残疾家庭':'canji','残疾':'canji','军烈属':'jun','军属':'jun'};
+var BIZREV={'无':'none','':'none','合作社':'coop','公司':'company','家庭农场':'farm','个体工商户':'shop','个体户':'shop'};
+function normHead(h){return String(h||'').replace(/[\s（）()：:、,，\/]/g,function(c){return '';}).replace(/[\s（）()：:、,，]/g,'');}
+function importXls(inp){
+  var f=inp.files[0];if(!f)return;
+  var ext=(f.name.split('.').pop()||'').toLowerCase();
+  showHint('正在读取 '+f.name+' …');
+  if(ext==='csv'||ext==='txt'){
+    var r=new FileReader();
+    r.onload=function(){try{parseTable(csvParse(r.result));}catch(e){alert('解析失败：'+e.message);}};
+    r.readAsArrayBuffer(f);
+  }else{
+    // XLSX：动态加载 SheetJS
+    if(!window.XLSX){
+      var s=document.createElement('script');
+      s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+      s.onload=function(){readXlsx(f);};
+      s.onerror=function(){alert('xlsx组件加载失败，请检查网络，或把Excel另存为CSV再导入');};
+      document.head.appendChild(s);
+    }else readXlsx(f);
+  }
+  inp.value='';
+}
+function readXlsx(f){
+  var r=new FileReader();
+  r.onload=function(){
+    try{
+      var wb=XLSX.read(r.result,{type:'array'});
+      var ws=wb.Sheets[wb.SheetNames[0]];
+      parseTable(XLSX.utils.sheet_to_json(ws,{header:1,defval:''}));
+    }catch(e){alert('解析失败：'+e.message);}
+  };
+  r.readAsArrayBuffer(f);
+}
+function csvParse(buf){
+  var u8=new Uint8Array(buf);
+  var txt;
+  if(u8[0]===0xEF&&u8[1]===0xBB&&u8[2]===0xBF){txt=new TextDecoder('utf-8').decode(u8.subarray(3));}
+  else{
+    try{txt=new TextDecoder('utf-8',{fatal:true}).decode(u8);}
+    catch(e){txt=new TextDecoder('gbk').decode(u8);}
+  }
+  var rows=[],row=[],cur='',q=false;
+  for(var i=0;i<txt.length;i++){
+    var c=txt[i];
+    if(q){
+      if(c==='"'){if(txt[i+1]==='"'){cur+='"';i++;}else q=false;}
+      else cur+=c;
+    }else{
+      if(c==='"')q=true;
+      else if(c===','){row.push(cur);cur='';}
+      else if(c==='\n'){row.push(cur);rows.push(row);row=[];cur='';}
+      else if(c!=='\r')cur+=c;
+    }
+  }
+  if(cur!==''||row.length){row.push(cur);rows.push(row);}
+  return rows;
+}
+function parseTable(rows){
+  if(!rows||!rows.length)throw new Error('空表格');
+  // 找表头行（含"编号"或"户主"或"成员姓名"）
+  var hi=-1;
+  for(var i=0;i<Math.min(rows.length,10);i++){
+    var hs=(rows[i]||[]).map(normHead);
+    if(hs.some(function(h){return h==='编号'||h==='户主'||h==='户主姓名';})){hi=i;break;}
+  }
+  if(hi<0)throw new Error('没找到表头行（需含「编号」或「户主」列）');
+  var heads=(rows[hi]||[]).map(function(h){return HMAP[normHead(h)]||'';});
+  var groups={},order=[],lastKey=null;
+  for(var i=hi+1;i<rows.length;i++){
+    var r=rows[i];if(!r||!r.length)continue;
+    var o={};
+    heads.forEach(function(k,j){if(!k)return;var v=String(r[j]==null?'':r[j]).trim();if(v)o[k]=v;});
+    var no=o.no||'';
+    if(!no&&!(o.mname||o.owner||o.phone||o.sname))continue;
+    var key=no||lastKey;                       // 空编号=延续上一户（Excel合并单元格写法）
+    if(!key)key='户主'+(o.owner||'')+(o.mname||'');
+    if(!groups[key]){groups[key]={no:no||'',rows:[]};order.push(key);}
+    groups[key].rows.push(o);
+    groups[key].no=groups[key].no||(no||'');
+    lastKey=key;
+  }
+  var ok=0,mk=0,news=0,unmatched=[];
+  order.forEach(function(key){
+    var g=groups[key];
+    var h=null;
+    if(g.no)h=DATA.houses.filter(function(x){return x.no===g.no;})[0]||null;
+    if(!h&&g.no){unmatched.push(g.no);}
+    if(!h){ // 没有匹配的地图框：建一个新记录放村中心附近
+      h=newHouse((DATA.hall||VILLAGE)[0],(DATA.hall||VILLAGE)[1]);
+      if(g.no)h.no=g.no;
+      DATA.houses.push(h);news++;
+    }
+    g.rows.forEach(function(o){
+      if(o.owner)h.owner=o.owner;
+      if(o.phone)h.phone=o.phone;
+      if(o.group)h.group=o.group;
+      if(o.label)h.label=o.label;
+      if(o.note)h.note=o.note;
+      if(o.tags){
+        o.tags.split(/[\/、;；,，\s]+/).forEach(function(t){
+          var c=TAGREV[t];if(c&&h.tags.indexOf(c)<0)h.tags.push(c);
+        });
+      }
+      if(o.biztype){var bt=BIZREV[o.biztype]||'none';if(bt!=='none')h.biz={type:bt,name:o.bizname||'',note:''};}
+      if(o.sname){
+        var amt=o.samount||'';
+        var dup=h.subsidies.some(function(s){return s.name===o.sname&&String(s.amount)===String(amt);});
+        if(!dup)h.subsidies.push({name:o.sname,amount:amt,note:''});
+      }
+      if(o.mname){
+        var m=null;
+        h.members.forEach(function(x){if(x.name===o.mname)m=x;});
+        if(!m){ // 复用空的默认成员位，避免表格里出现一行空白
+          h.members.forEach(function(x){if(!m&&!x.name)m=x;});
+        }
+        if(!m){m={name:o.mname,rel:o.rel||'其他',sex:o.sex||'男',age:'',health:'健康',income:'',politics:'群众',job:''};h.members.push(m);}
+        mk++;
+        if(o.rel)m.rel=o.rel;
+        if(o.sex)m.sex=o.sex;
+        if(o.age)m.age=o.age;
+        if(o.health)m.health=o.health;
+        if(o.politics)m.politics=o.politics;
+        if(o.income)m.income=o.income;
+        if(o.job)m.job=o.job;
+      }
+    });
+    ok++;
+  });
+  save();redrawAll();
+  var msg='✅ 导入完成：'+ok+' 户（成员信息 '+mk+' 条）';
+  if(news)msg+='；其中 '+news+' 户未匹配到地图编号，已放在村中心，请拖到对应房屋';
+  if(unmatched.length)msg+='；未匹配编号：'+unmatched.join('、');
+  showHint(msg);alert(msg);
+  document.getElementById('dataM').style.display='none';
+}
 
 /* ============ 提示 ============ */
 var hintT=null;
@@ -493,13 +1094,13 @@ function showHint(msg){
   var h=document.getElementById('hint');
   if(!msg){h.style.display='none';return;}
   h.textContent=msg;h.style.display='block';
-  clearTimeout(hintT);hintT=setTimeout(function(){h.style.display='none';},3500);
+  clearTimeout(hintT);hintT=setTimeout(function(){h.style.display='none';},6000);
 }
 
 /* ============ 初始渲染 ============ */
-map.on('load',redrawAll);
-redrawAll();
-window.__VER='v1.0';
+refreshLegend();
+drawHall();
+window.__VER='v2.0';
 </script>
 </body>
 </html>
