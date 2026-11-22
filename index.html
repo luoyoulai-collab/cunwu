@@ -120,16 +120,77 @@ table.st th{background:#f1f5f9}
 #guide ol{padding-left:20px}
 #guide .btn{margin-top:16px}
 @media (max-width:600px){
+ #topbar{flex-wrap:wrap}
+ #search{order:9;flex-basis:100%;max-width:none;min-width:0}
  #topbar .brand small{display:none}
  #legend{bottom:130px;font-size:11px;padding:8px}
  .btn{padding:8px 10px;font-size:12px}
  #penPanel{top:auto;bottom:150px;right:8px;left:8px;width:auto}
  #toolbar{left:8px;right:8px;transform:none;justify-content:flex-start}
+ #userbar{top:auto;bottom:150px;right:8px}
 }
+/* ===== 登录 ===== */
+#login{position:absolute;inset:0;z-index:99;background:radial-gradient(1200px 600px at 70% -10%,#1e3a8a 0%,#0f172a 55%,#020617 100%);display:flex;align-items:center;justify-content:center;padding:20px}
+#login .lbox{width:min(380px,94vw);background:rgba(255,255,255,.07);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.16);border-radius:20px;padding:28px 26px;color:#fff;box-shadow:0 24px 80px rgba(0,0,0,.5)}
+#login h1{font-size:21px;text-align:center;margin-bottom:4px}
+#login .sub{font-size:12px;color:#93c5fd;text-align:center;margin-bottom:20px;letter-spacing:2px}
+#login .ltab{display:flex;gap:6px;background:rgba(255,255,255,.08);border-radius:10px;padding:4px;margin-bottom:16px}
+#login .ltab div{flex:1;text-align:center;padding:8px 0;border-radius:8px;font-size:14px;cursor:pointer;color:#cbd5e1}
+#login .ltab div.on{background:#2563eb;color:#fff;font-weight:700}
+#login input{width:100%;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);border-radius:10px;padding:11px 14px;color:#fff;font-size:15px;margin-bottom:12px;outline:none}
+#login input::placeholder{color:#94a3b8}
+#login input:focus{border-color:#3b82f6}
+#login .lbtn{width:100%;border:none;border-radius:10px;padding:12px 0;font-size:15px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#2563eb,#06b6d4);color:#fff;margin-top:4px}
+#login .lbtn:active{transform:scale(.98)}
+#login .lnote{font-size:11px;color:#64748b;text-align:center;margin-top:14px;line-height:1.7}
+#login .lerr{font-size:12px;color:#fca5a5;text-align:center;margin:-4px 0 8px;display:none}
+/* ===== 用户条 ===== */
+#userbar{position:absolute;top:64px;right:12px;z-index:20;display:flex;align-items:center;gap:6px;background:rgba(15,23,42,.72);border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:6px 10px;cursor:pointer;white-space:nowrap;color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.3)}
+#userbar .rl{font-size:11px;color:#fff;opacity:.85}
+/* ===== 简略卡片 ===== */
+#card{position:absolute;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);z-index:35;width:min(360px,calc(100vw - 24px));background:rgba(255,255,255,.97);border-radius:16px;box-shadow:0 16px 50px rgba(2,6,23,.45);opacity:0;pointer-events:none;transition:.22s;overflow:hidden}
+#card.open{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
+#card .chead{display:flex;justify-content:space-between;align-items:center;padding:12px 16px 8px}
+#card .chead b{font-size:16px}
+#card table{width:100%;border-collapse:collapse}
+#card td{padding:7px 16px;font-size:13.5px;border-top:1px solid #f1f5f9}
+#card td.k{color:#64748b;width:82px;white-space:nowrap}
+#card .cbtns{display:flex;gap:8px;padding:12px 16px 14px}
+#card .cbtns .btn{flex:1;justify-content:center}
+#card .cx{border:none;background:#f1f5f9;border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:15px}
+/* ===== 账号管理 ===== */
+.acct-row{display:flex;gap:6px;align-items:center;background:#f8fafc;border-radius:10px;padding:8px 10px;margin-bottom:6px;font-size:13px}
+.acct-row b{flex:1}
 </style>
 </head>
 <body>
 <div id="map"></div>
+
+<!-- 登录 -->
+<div id="login">
+  <div class="lbox">
+    <h1>🏘️ 檀园村务图</h1>
+    <div class="sub">漂沙井镇 · 3D实景村务管理</div>
+    <div class="ltab">
+      <div class="on" id="ltabLogin" onclick="lTab(0)">账 号 登 录</div>
+      <div id="ltabReg" onclick="lTab(1)">村 民 注 册</div>
+    </div>
+    <div class="lerr" id="lerr"></div>
+    <input type="text" id="l_acc" placeholder="账号（手机号）" autocomplete="username">
+    <input type="password" id="l_pwd" placeholder="密码" autocomplete="current-password">
+    <input type="text" id="l_name" placeholder="您的姓名（注册用）" style="display:none">
+    <button class="lbtn" id="lbtnGo" onclick="doLogin()">登 录</button>
+    <div class="lnote">村干部与白名单账号请联系管理员开通<br>村民注册后可查看本村公开信息 · 数据仅存本机</div>
+  </div>
+</div>
+
+<!-- 用户条 -->
+<div id="userbar" onclick="logoutAsk()" style="display:none" title="点击退出登录">
+  <span id="uName">—</span><span class="rl" id="uRole">—</span><span style="font-size:12px">⎋</span>
+</div>
+
+<!-- 简略卡片 -->
+<div id="card"></div>
 
 <div id="topbar">
   <div class="brand">🏘️ 檀园村务图<small>漂沙井镇 · 3D实景</small></div>
@@ -138,6 +199,7 @@ table.st th{background:#f1f5f9}
   <button class="btn ghost" id="btnStats">📊 统计</button>
   <button class="btn ghost" id="btnData">💾 数据</button>
   <button class="btn ghost" id="btnLoc" title="定位到我所在位置">📍 定位</button>
+  <button class="btn ghost" id="btnAcct" style="display:none" onclick="openAcct()">👤 账号</button>
   <button class="btn ghost" id="btnHelp">❓</button>
 </div>
 
@@ -187,6 +249,24 @@ table.st th{background:#f1f5f9}
   </div>
 </div>
 
+<!-- 账号管理 -->
+<div id="acctM" style="position:absolute;inset:0;z-index:41;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:#fff;border-radius:16px;max-width:480px;width:100%;padding:20px;max-height:86vh;overflow-y:auto">
+    <h3 style="margin-bottom:6px;display:flex;justify-content:space-between">👤 账号管理 <button class="btn small" onclick="document.getElementById('acctM').style.display='none'">关闭</button></h3>
+    <p style="font-size:12px;color:#6b7280;margin-bottom:12px">白名单账号：可查看和编辑全部户档，不能删除；村民账号：只能看公开信息。账号数据保存在本机。</p>
+    <h4 style="font-size:13px;margin:10px 0 8px">🛡️ 白名单账号</h4>
+    <div id="wlList"></div>
+    <div style="display:flex;gap:6px;margin:8px 0 4px">
+      <input type="text" id="wl_acc" placeholder="账号(手机号)" style="flex:1;border:1px solid #e5e7eb;border-radius:8px;padding:8px;font-size:13px">
+      <input type="text" id="wl_pwd" placeholder="密码" style="flex:1;border:1px solid #e5e7eb;border-radius:8px;padding:8px;font-size:13px">
+      <input type="text" id="wl_name" placeholder="姓名" style="flex:1;border:1px solid #e5e7eb;border-radius:8px;padding:8px;font-size:13px">
+      <button class="btn small pri" onclick="wlAdd()">➕ 添加</button>
+    </div>
+    <h4 style="font-size:13px;margin:14px 0 8px">👥 村民账号</h4>
+    <div id="villList"></div>
+  </div>
+</div>
+
 <!-- 统计 -->
 <div id="stats" onclick="if(event.target===this)this.classList.remove('open')">
   <div class="spanel">
@@ -202,11 +282,11 @@ table.st th{background:#f1f5f9}
     <p style="font-size:13px;color:#6b7280;line-height:1.8;margin-bottom:14px">所有数据自动保存在本浏览器中，<b>不上传任何服务器</b>。换设备或换浏览器前请先导出备份文件。</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn pri" onclick="exportJSON()">⬇️ 导出备份(JSON)</button>
-      <button class="btn" onclick="document.getElementById('impFile').click()">⬆️ 导入备份</button>
-      <button class="btn" onclick="exportCSV()">📄 导出花名册(Excel)</button>
-      <button class="btn" onclick="dlTemplate()">📋 下载导入模板</button>
-      <button class="btn" onclick="document.getElementById('impXls').click()">📥 Excel批量导入</button>
-      <button class="btn warn" onclick="clearAll()">🗑️ 清空全部</button>
+      <button class="btn" id="dBtnImportBak" onclick="document.getElementById('impFile').click()">⬆️ 导入备份</button>
+      <button class="btn" id="dBtnExpCsv" onclick="exportCSV()">📄 导出花名册(Excel)</button>
+      <button class="btn" id="dBtnTpl" onclick="dlTemplate()">📋 下载导入模板</button>
+      <button class="btn" id="dBtnImpXls" onclick="document.getElementById('impXls').click()">📥 Excel批量导入</button>
+      <button class="btn warn" id="dBtnClear" onclick="clearAll()">🗑️ 清空全部</button>
     </div>
     <input type="file" id="impFile" accept=".json" style="display:none" onchange="importJSON(this)">
     <input type="file" id="impXls" accept=".csv,.xlsx,.xls" style="display:none" onchange="importXls(this)">
@@ -225,14 +305,14 @@ table.st th{background:#f1f5f9}
 <!-- 引导 -->
 <div id="guide">
   <div class="gpanel">
-    <h2>👋 欢迎使用檀园村务图 v2</h2>
+    <h2>👋 欢迎使用檀园村务图 v3</h2>
     <ol>
-      <li><b>✏️ 画区域</b>：逐点点击画出村界、组界、某家的田/山，点「闭合区域」命名保存（可中断，下次接着画）。画好的区域点左下角图例可显示/隐藏，点区域可改可删</li>
-      <li><b>🔍 识别屋顶</b>：把地图拉到要看的地块上空点它，自动框出屋顶（约九成准，误框点开即删）；漏的用 <b>📐 框屋顶</b> 手动拖一个框补上</li>
-      <li>点屋顶框或图钉 → 填<b>编号、组、户主、家庭成员、健康、收入、党员、补贴、合作社</b></li>
+      <li><b>🔐 账号体系</b>：管理员（您）全功能；白名单账号可看可改不能删；村民账号只看公开信息（右上角👤账号里管理）</li>
+      <li><b>✏️ 画区域</b>：逐点点击画出村界、组界、某家的田/山，点「闭合区域」命名保存（可中断续画）。画区域时自动切回俯视</li>
+      <li><b>🔍 识别屋顶</b>：把地图拉到要看的地块上空点它，自动框出屋顶（约九成准，误框点开即删）；漏的用 <b>📐 框屋顶</b> 补</li>
+      <li>点标记先出<b>简略卡片</b>（编号/户主/身份/证件/电话），「查看详情」进完整档案，「删除」需二次确认</li>
       <li>有 Excel 花名册？💾数据 → 📥 Excel批量导入，按编号自动挂到屋顶上（先下载模板照着填）</li>
-      <li>🏛️ <b>村部</b>：点地图设一次，以后「🏠 回村」一键飞回村部；📍 定位 = 我现在站的位置</li>
-      <li>🏔️ 3D视角 倾斜看立体实景；数据自动存在本机，<b>请定期导出备份</b></li>
+      <li>🏛️ 村部设一次，「🏠 回村」一键飞回；🏔️ 3D 看立体实景；数据自动存本机，<b>请定期导出备份</b></li>
     </ol>
     <button class="btn pri" onclick="localStorage.setItem('tanyuan_guide','1');document.getElementById('guide').classList.remove('open')">开始使用</button>
   </div>
@@ -268,7 +348,7 @@ var map=new maplibregl.Map({
     sat:{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],tileSize:256,maxzoom:18,attribution:'Esri World Imagery'},
     lab:{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}'],tileSize:256,maxzoom:18}
   },layers:[{id:'sat',type:'raster',source:'sat'},{id:'lab',type:'raster',source:'lab',paint:{'raster-opacity':0.9}}]},
-  center:VILLAGE,zoom:14.2,pitch:45,bearing:-20,attributionControl:false,maxZoom:19.5
+  center:VILLAGE,zoom:14.2,pitch:0,bearing:0,attributionControl:false,maxZoom:19.5
 });
 map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'top-right');
 map.addControl(new maplibregl.ScaleControl({maxWidth:100}),'bottom-right');
@@ -313,6 +393,10 @@ document.getElementById('btnLoc').onclick=function(){
 /* ============ 工具模式切换 ============ */
 var tool=null; // 'pin'|'pen'|'box'|'hall'
 function setTool(t){
+  if(t&&ROLE!=='admin'){showHint('当前身份无此权限');return;}
+  if(t==='pen'||t==='box'){ // 画区域/框选自动转俯视，方便绘制
+    if(map.getPitch()>1||Math.abs(map.getBearing())>1)map.easeTo({pitch:0,bearing:0,duration:500});
+  }
   tool=(tool===t)?null:t;
   document.getElementById('btnAdd').classList.toggle('on',tool==='pin');
   document.getElementById('btnAdd').textContent=tool==='pin'?'✅ 点击地图放置标记':'➕ 标记房屋';
@@ -372,7 +456,7 @@ function drawMarker(h){
     el.className='nolab'+(h.no?'':' empty');
     el.textContent=h.no||'';
     el.title=(h.no?'编号'+h.no+' · ':'')+(h.owner||h.label||'未命名');
-    el.onclick=function(ev){ev.stopPropagation();openDrawer(h.id);};
+    el.onclick=function(ev){ev.stopPropagation();openCard(h.id);};
     var cx=(h.bbox[0]+h.bbox[2])/2,cy=(h.bbox[1]+h.bbox[3])/2;
     var mk=new maplibregl.Marker({element:el,draggable:true}).setLngLat([cx,cy]).addTo(map);
     mk.on('dragend',function(){
@@ -388,7 +472,7 @@ function drawMarker(h){
   el.className='pin '+pinClass(h);
   el.innerHTML='<span>'+pinIcon(h)+'</span>';
   el.title=(h.no?'编号'+h.no+' · ':'')+(h.label||h.owner||'未命名');
-  el.onclick=function(ev){ev.stopPropagation();openDrawer(h.id);};
+  el.onclick=function(ev){ev.stopPropagation();openCard(h.id);};
   var mk=new maplibregl.Marker({element:el,draggable:false}).setLngLat([h.lon,h.lat]).addTo(map);
   markers[h.id]=mk;
 }
@@ -407,7 +491,7 @@ function roofsFC(){
 }
 function drawRoofs(){var s=map.getSource('roofs');if(s)s.setData(roofsFC());}
 map.on('click','roofs-f',function(e){
-  var f=e.features[0];if(f)openDrawer(f.properties.id);
+  var f=e.features[0];if(f)openCard(f.properties.id);
 });
 /* 区域 GeoJSON */
 function areasFC(){
@@ -701,6 +785,7 @@ function newHouse(lon,lat){
 }
 function findH(id){for(var i=0;i<DATA.houses.length;i++)if(DATA.houses[i].id===id)return DATA.houses[i];return null;}
 var TAGDEFS=[['tuopin','脱贫户'],['jiance','监测户'],['dibao','低保户'],['wubao','特困/五保'],['canji','残疾家庭'],['jun','军烈属']];
+var OWNER_ROLES=['一般村民','村组干部','中共党员','村民代表','其他'];
 var BIZDEFS=[['none','无'],['coop','合作社'],['company','公司'],['farm','家庭农场'],['shop','个体工商户']];
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function opt(arr,sel){return arr.map(function(o){return '<option'+(o===sel?' selected':'')+'>'+o+'</option>';}).join('');}
@@ -720,6 +805,8 @@ function openDrawer(id,isNew){
     '<div class="frow"><div><label class="fl">门牌 / 别名</label><input type="text" id="f_label" value="'+esc(h.label)+'" placeholder="组名+门牌号"></div></div>'+
     '<div class="frow"><div><label class="fl">户主姓名</label><input type="text" id="f_owner" value="'+esc(h.owner)+'"></div>'+
     '<div><label class="fl">联系电话</label><input type="tel" id="f_phone" value="'+esc(h.phone)+'"></div></div>'+
+    '<div class="frow"><div><label class="fl">户主身份</label><select id="f_role">'+opt(OWNER_ROLES,h.owner_role||'一般村民')+'</select></div>'+
+    '<div><label class="fl">身份证号</label><input type="text" id="f_idcard" value="'+esc(h.owner_idcard)+'" placeholder="仅管理员可见" maxlength="18"></div></div>'+
     '<div class="frow"><div style="flex:none;min-width:auto"><button class="btn small" onclick="toggleDrag()">📍 拖动调整位置</button></div>'+
     '<div><label class="fl">坐标</label><input type="text" id="f_coord" readonly value="'+h.lon.toFixed(6)+', '+h.lat.toFixed(6)+'" style="background:#f1f5f9;font-size:12px"></div></div>'+
     (h.bbox?'<p style="font-size:11px;color:#9ca3af">这是屋顶框，可拖动圆形编号标签调整位置；拖动地图中该圆点到正确屋顶即可。</p>':'')+
@@ -776,6 +863,8 @@ function collect(){
   h.label=document.getElementById('f_label').value.trim();
   h.owner=document.getElementById('f_owner').value.trim();
   h.phone=document.getElementById('f_phone').value.trim();
+  h.owner_idcard=document.getElementById('f_idcard').value.trim();
+  h.owner_role=document.getElementById('f_role').value;
   h.tags=[].map.call(document.querySelectorAll('#f_tags .chip.on'),function(c){return c.dataset.tag;});
   h.members=[].map.call(document.querySelectorAll('#f_members .mrow'),function(r){
     var m={};[].forEach.call(r.querySelectorAll('[data-k]'),function(inp){m[inp.dataset.k]=inp.value;});
@@ -794,7 +883,9 @@ document.getElementById('btnSave').onclick=function(){
 };
 document.getElementById('btnDel').onclick=function(){
   if(!editing)return;
+  if(ROLE!=='admin'){showHint('当前身份无删除权限');return;}
   if(!confirm('确定删除这户的标记和全部信息吗？'))return;
+  if(!confirm('⚠️ 二次确认：删除后无法恢复，真的删除吗？'))return;
   var id=editing.id;
   DATA.houses=DATA.houses.filter(function(x){return x.id!==id;});
   save();removeMarker(id);drawRoofs();closeDrawer();showHint('已删除');
@@ -848,7 +939,7 @@ function tagsOf(h){
   if(h.biz&&h.biz.type!=='none'&&h.biz.name)out+='<span class="tag biz">'+esc(h.biz.name)+'</span>';
   return out;
 }
-function flyTo(id){var h=findH(id);if(!h)return;document.getElementById('results').style.display='none';map.flyTo({center:[h.lon,h.lat],zoom:18,duration:1200});openDrawer(id);}
+function flyTo(id){var h=findH(id);if(!h)return;document.getElementById('results').style.display='none';map.flyTo({center:[h.lon,h.lat],zoom:18,duration:1200});openCard(id);}
 document.getElementById('search').addEventListener('blur',function(){setTimeout(function(){document.getElementById('results').style.display='none';},250);});
 
 /* ============ 统计 ============ */
@@ -915,7 +1006,7 @@ function importJSON(inp){
   r.readAsText(f);inp.value='';
 }
 function exportCSV(){
-  var rows=[['编号','组','门牌','户主','电话','成员姓名','关系','性别','年龄','健康状况','政治面貌','年收入(元)','就业','家庭类型','经营主体','补贴','坐标','备注']];
+  var rows=[['编号','组','门牌','户主','户主身份','身份证号','电话','成员姓名','关系','性别','年龄','健康状况','政治面貌','年收入(元)','就业','家庭类型','经营主体','补贴','坐标','备注']];
   var tmap={tuopin:'脱贫户',jiance:'监测户',dibao:'低保户',wubao:'特困',canji:'残疾家庭',jun:'军烈属'};
   DATA.houses.forEach(function(h){
     var tags=(h.tags||[]).map(function(t){return tmap[t]||t;}).join('/');
@@ -923,7 +1014,7 @@ function exportCSV(){
     var subs=(h.subsidies||[]).map(function(s){return (s.name||'')+(s.amount?'('+s.amount+'元)':'');}).join('；');
     var ms=h.members&&h.members.length?h.members:[{name:''}];
     ms.forEach(function(m){
-      rows.push([h.no,h.group,h.label,h.owner,h.phone,m.name,m.rel,m.sex,m.age,m.health,m.politics,m.income,m.job,tags,biz,subs,h.lon.toFixed(6)+','+h.lat.toFixed(6),h.note]);
+      rows.push([h.no,h.group,h.label,h.owner,h.owner_role||'',h.owner_idcard||'',h.phone,m.name,m.rel,m.sex,m.age,m.health,m.politics,m.income,m.job,tags,biz,subs,h.lon.toFixed(6)+','+h.lat.toFixed(6),h.note]);
     });
   });
   var csv='\ufeff'+rows.map(function(r){return r.map(function(c){return '"'+String(c==null?'':c).replace(/"/g,'""')+'"';}).join(',');}).join('\r\n');
@@ -939,18 +1030,18 @@ function clearAll(){
 document.getElementById('btnHelp').onclick=function(){document.getElementById('guide').classList.add('open');};
 
 /* ============ Excel 批量导入 ============ */
-var TPL_HEAD=['编号','户主','电话','组','门牌','成员姓名','与户主关系','性别','年龄','政治面貌','健康状况','年收入(元)','就业','家庭类型','补贴项目','补贴金额(元/年)','经营主体类型','经营主体名称','备注'];
+var TPL_HEAD=['编号','户主','户主身份','身份证号','电话','组','门牌','成员姓名','与户主关系','性别','年龄','政治面貌','健康状况','年收入(元)','就业','家庭类型','补贴项目','补贴金额(元/年)','经营主体类型','经营主体名称','备注'];
 function dlTemplate(){
   var rows=[TPL_HEAD,
-    ['1','张三','13800000000','董大塘组','董大塘组12号','张三','户主','男','55','中共党员','慢性病','12000','务农','脱贫户','耕地地力保护补贴','800','家庭农场','檀园种植农场',''],
-    ['1','','','','','张三妻','配偶','女','53','群众','健康','5000','家务','','','','','',''],
-    ['2','李四','','庙家组','','李四','户主','男','40','群众','健康','30000','务工','监测户','低保金','2400','','','']
+    ['1','张三','村组干部','430221197001011234','13800000000','董大塘组','董大塘组12号','张三','户主','男','55','中共党员','慢性病','12000','务农','脱贫户','耕地地力保护补贴','800','家庭农场','檀园种植农场',''],
+    ['1','','','','','','','张三妻','配偶','女','53','群众','健康','5000','家务','','','','','',''],
+    ['2','李四','一般村民','','','庙家组','','李四','户主','男','40','群众','健康','30000','务工','监测户','低保金','2400','','','']
   ];
   var csv='\ufeff'+rows.map(function(r){return r.map(function(c){return '"'+String(c==null?'':c).replace(/"/g,'""')+'"';}).join(',');}).join('\r\n');
   dl('檀园村导入模板.csv',csv,'text/csv');
   showHint('模板已下载，用Excel打开照着填（同编号多行=同一户多人）');
 }
-var HMAP={'编号':'no','房号':'no','户主':'owner','户主姓名':'owner','电话':'phone','联系电话':'phone','手机':'phone','组':'group','村组':'group','小组':'group','组别':'group','门牌':'label','门牌号':'label','别名':'label','成员姓名':'mname','姓名':'mname','人口姓名':'mname','关系':'rel','与户主关系':'rel','性别':'sex','年龄':'age','政治面貌':'politics','健康状况':'health','健康':'health','年收入':'income','年收入(元)':'income','收入':'income','就业':'job','就业就学':'job','职业':'job','家庭类型':'tags','标签':'tags','类型':'tags','补贴项目':'sname','补贴':'sname','补贴名称':'sname','补贴金额':'samount','补贴金额(元/年)':'samount','补贴金额(元)':'samount','经营主体类型':'biztype','经营主体名称':'bizname','备注':'note'};
+var HMAP={'编号':'no','房号':'no','户主':'owner','户主姓名':'owner','电话':'phone','联系电话':'phone','手机':'phone','身份证号':'oidcard','身份证':'oidcard','证件号':'oidcard','户主身份':'orole','组':'group','村组':'group','小组':'group','组别':'group','门牌':'label','门牌号':'label','别名':'label','成员姓名':'mname','姓名':'mname','人口姓名':'mname','关系':'rel','与户主关系':'rel','性别':'sex','年龄':'age','政治面貌':'politics','健康状况':'health','健康':'health','年收入':'income','年收入(元)':'income','收入':'income','就业':'job','就业就学':'job','职业':'job','家庭类型':'tags','标签':'tags','类型':'tags','补贴项目':'sname','补贴':'sname','补贴名称':'sname','补贴金额':'samount','补贴金额(元/年)':'samount','补贴金额(元)':'samount','经营主体类型':'biztype','经营主体名称':'bizname','备注':'note'};
 var TAGREV={'脱贫户':'tuopin','脱贫':'tuopin','监测户':'jiance','监测':'jiance','低保户':'dibao','低保':'dibao','特困':'wubao','五保':'wubao','特困/五保':'wubao','残疾家庭':'canji','残疾':'canji','军烈属':'jun','军属':'jun'};
 var BIZREV={'无':'none','':'none','合作社':'coop','公司':'company','家庭农场':'farm','个体工商户':'shop','个体户':'shop'};
 function normHead(h){return String(h||'').replace(/[\s（）()：:、,，\/]/g,function(c){return '';}).replace(/[\s（）()：:、,，]/g,'');}
@@ -1047,6 +1138,8 @@ function parseTable(rows){
     g.rows.forEach(function(o){
       if(o.owner)h.owner=o.owner;
       if(o.phone)h.phone=o.phone;
+      if(o.oidcard)h.owner_idcard=o.oidcard;
+      if(o.orole)h.owner_role=o.orole;
       if(o.group)h.group=o.group;
       if(o.label)h.label=o.label;
       if(o.note)h.note=o.note;
@@ -1100,7 +1193,155 @@ function showHint(msg){
 /* ============ 初始渲染 ============ */
 refreshLegend();
 drawHall();
-window.__VER='v2.0';
+/* ============ 登录与权限体系 ============ */
+var ADMIN={acc:'15700782381',pwd:'Luoyoulai123',name:'管理员'};
+var ROLE=null,ME=null;
+function getUsers(){
+  try{var u=JSON.parse(localStorage.getItem('tanyuan_users')||'{}');u.wl=u.wl||[];u.vill=u.vill||[];return u;}
+  catch(e){return {wl:[],vill:[]};}
+}
+function setUsers(u){localStorage.setItem('tanyuan_users',JSON.stringify(u));}
+function lTab(reg){
+  document.getElementById('ltabLogin').classList.toggle('on',!reg);
+  document.getElementById('ltabReg').classList.toggle('on',!!reg);
+  document.getElementById('l_name').style.display=reg?'block':'none';
+  document.getElementById('lbtnGo').textContent=reg?'注 册 并 进 入':'登 录';
+  document.getElementById('lerr').style.display='none';
+}
+function lErr(m){var e=document.getElementById('lerr');e.textContent=m;e.style.display='block';}
+function doLogin(){
+  var acc=document.getElementById('l_acc').value.trim(),pwd=document.getElementById('l_pwd').value;
+  var reg=document.getElementById('ltabReg').classList.contains('on');
+  var name=document.getElementById('l_name').value.trim();
+  if(!acc||!pwd){lErr('请输入账号和密码');return;}
+  if(acc===ADMIN.acc&&pwd===ADMIN.pwd&&!reg){loginOK('admin',ADMIN.name,acc);return;}
+  var u=getUsers();
+  if(reg){
+    if(!/^1\d{10}$/.test(acc)){lErr('账号请用11位手机号');return;}
+    if(pwd.length<6){lErr('密码至少6位');return;}
+    if(!name){lErr('请填写您的姓名');return;}
+    if(acc===ADMIN.acc||u.wl.some(function(x){return x.acc===acc;})||u.vill.some(function(x){return x.acc===acc;})){lErr('该账号已被注册');return;}
+    u.vill.push({acc:acc,pwd:pwd,name:name});setUsers(u);
+    loginOK('villager',name,acc);return;
+  }
+  var w=u.wl.filter(function(x){return x.acc===acc&&x.pwd===pwd;})[0];
+  if(w){loginOK('wl',w.name||w.acc,acc);return;}
+  var v=u.vill.filter(function(x){return x.acc===acc&&x.pwd===pwd;})[0];
+  if(v){loginOK('villager',v.name||v.acc,acc);return;}
+  lErr('账号或密码不正确');
+}
+function loginOK(role,name,acc){
+  ROLE=role;ME={name:name,acc:acc};
+  localStorage.setItem('tanyuan_session',JSON.stringify({role:role,name:name,acc:acc,ts:Date.now()}));
+  document.getElementById('login').style.display='none';
+  applyRole();
+  showHint('欢迎，'+name+'（'+roleName()+'）');
+}
+function roleName(){return ROLE==='admin'?'管理员':ROLE==='wl'?'白名单':'村民';}
+function logoutAsk(){
+  if(!confirm('退出登录？'))return;
+  localStorage.removeItem('tanyuan_session');location.reload();
+}
+function applyRole(){
+  var admin=ROLE==='admin',wl=ROLE==='wl';
+  ['topbar','toolbar','legend'].forEach(function(id){document.getElementById(id).style.visibility='visible';});
+  // 顶栏与工具条按钮
+  document.getElementById('btnAdd').style.display=admin?'inline-flex':'none';
+  document.getElementById('btnStats').style.display=(admin||wl)?'inline-flex':'none';
+  document.getElementById('btnData').style.display=(admin||wl)?'inline-flex':'none';
+  document.getElementById('btnAcct').style.display=admin?'inline-flex':'none';
+  ['btnPen','btnBox','btnDetect','btnHall'].forEach(function(b){var el=document.getElementById(b);if(el)el.style.display=admin?'inline-flex':'none';});
+  // 数据面板里高危按钮
+  document.getElementById('dBtnImportBak').style.display=admin?'inline-flex':'none';
+  document.getElementById('dBtnImpXls').style.display=admin?'inline-flex':'none';
+  document.getElementById('dBtnTpl').style.display=admin?'inline-flex':'none';
+  document.getElementById('dBtnClear').style.display=admin?'inline-flex':'none';
+  document.getElementById('dBtnExpCsv').style.display=(admin||wl)?'inline-flex':'none';
+  // 抽屉删除按钮
+  document.getElementById('btnDel').style.display=admin?'inline-flex':'none';
+  // 用户条
+  document.getElementById('userbar').style.display='flex';
+  document.getElementById('uName').textContent=ME.name;
+  document.getElementById('uRole').textContent=roleName();
+  if(ROLE==='villager')showHint('村民模式：仅显示公开信息');
+}
+/* 账号管理 */
+function openAcct(){
+  if(ROLE!=='admin')return;
+  var u=getUsers();
+  document.getElementById('wlList').innerHTML=u.wl.length?u.wl.map(function(w,i){
+    return '<div class="acct-row"><b>'+esc(w.name||w.acc)+' · '+esc(w.acc)+'</b><button class="btn small" style="background:#fee2e2;color:#b91c1c" onclick="wlDel('+i+')">移除</button></div>';
+  }).join(''):'<p style="font-size:12px;color:#9ca3af">暂无白名单账号</p>';
+  document.getElementById('villList').innerHTML=u.vill.length?u.vill.map(function(v,i){
+    return '<div class="acct-row"><b>'+esc(v.name||v.acc)+' · '+esc(v.acc)+'</b><button class="btn small" style="background:#fee2e2;color:#b91c1c" onclick="villDel('+i+')">移除</button></div>';
+  }).join(''):'<p style="font-size:12px;color:#9ca3af">暂无村民注册</p>';
+  document.getElementById('acctM').style.display='flex';
+}
+function wlAdd(){
+  var acc=document.getElementById('wl_acc').value.trim(),pwd=document.getElementById('wl_pwd').value.trim(),name=document.getElementById('wl_name').value.trim();
+  if(!acc||!pwd){alert('账号和密码必填');return;}
+  var u=getUsers();
+  if(acc===ADMIN.acc||u.wl.some(function(x){return x.acc===acc;})||u.vill.some(function(x){return x.acc===acc;})){alert('账号已存在');return;}
+  u.wl.push({acc:acc,pwd:pwd,name:name||acc});setUsers(u);openAcct();
+  document.getElementById('wl_acc').value='';document.getElementById('wl_pwd').value='';document.getElementById('wl_name').value='';
+}
+function wlDel(i){if(!confirm('移除该白名单账号？'))return;var u=getUsers();u.wl.splice(i,1);setUsers(u);openAcct();}
+function villDel(i){if(!confirm('移除该村民账号？'))return;var u=getUsers();u.vill.splice(i,1);setUsers(u);openAcct();}
+
+/* ============ 简略卡片 ============ */
+var cardId=null,cardAt=0;
+function openCard(id){
+  var h=findH(id);if(!h)return;
+  cardId=id;cardAt=Date.now();
+  var admin=ROLE==='admin',wl=ROLE==='wl';
+  var rows='';
+  function row(k,v){if(v===undefined||v===null||v==='')v='—';return '<tr><td class="k">'+k+'</td><td>'+esc(v)+'</td></tr>';}
+  rows+=row('编号',h.no||h.label||'未编号');
+  rows+=row('户主',h.owner||'未登记');
+  rows+=row('户主身份',h.owner_role||'一般村民');
+  if(admin||wl){
+    rows+=row('身份证号',h.owner_idcard||'');
+    rows+=row('联系电话',h.phone||'');
+  }
+  var btns='';
+  if(admin||wl)btns+='<button class="btn pri" onclick="cardDetail()">📋 查看详情</button>';
+  if(admin)btns+='<button class="btn" style="background:#fee2e2;color:#b91c1c" onclick="cardDel()">🗑️ 删除信息</button>';
+  document.getElementById('card').innerHTML=
+    '<div class="chead"><b>🏠 '+(h.owner||'未登记户')+(h.group?'<span style="font-size:12px;color:#64748b;font-weight:400"> · '+esc(h.group)+'</span>':'')+'</b><button class="cx" onclick="closeCard()">✕</button></div>'+
+    '<table>'+rows+'</table>'+(btns?'<div class="cbtns">'+btns+'</div>':'');
+  document.getElementById('card').classList.add('open');
+}
+function closeCard(){document.getElementById('card').classList.remove('open');cardId=null;}
+function cardDetail(){if(ROLE==='villager'){showHint('村民账号仅显示公开信息');return;}var id=cardId;if(!id)return;closeCard();openDrawer(id);}
+function cardDel(){
+  if(ROLE!=='admin'){showHint('当前身份无删除权限');return;}
+  var h=findH(cardId);if(!h)return;
+  if(!confirm('确定删除「'+(h.owner||h.no||'该户')+'」的标记和全部信息吗？'))return;
+  if(!confirm('⚠️ 二次确认：删除后无法恢复，真的删除吗？'))return;
+  DATA.houses=DATA.houses.filter(function(x){return x.id!==h.id;});
+  save();removeMarker(h.id);drawRoofs();closeCard();
+  showHint('已删除');
+}
+map.on('click',function(){if(cardId&&Date.now()-cardAt>350)closeCard();});
+
+/* 会话恢复（7天有效） */
+(function(){
+  try{
+    var s=JSON.parse(localStorage.getItem('tanyuan_session')||'null');
+    if(s&&s.role&&Date.now()-s.ts<7*24*3600*1000){
+      ROLE=s.role;ME={name:s.name,acc:s.acc};
+      document.getElementById('login').style.display='none';
+      applyRole();
+      return;
+    }
+  }catch(e){}
+  // 未登录：隐藏功能界面，仅显示登录层
+  document.getElementById('topbar').style.visibility='hidden';
+  document.getElementById('toolbar').style.visibility='hidden';
+  document.getElementById('legend').style.visibility='hidden';
+})();
+
+window.__VER='v3.0';
 </script>
 </body>
 </html>
