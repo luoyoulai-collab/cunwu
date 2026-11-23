@@ -99,11 +99,19 @@ table.st{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
 table.st th,table.st td{border:1px solid var(--line);padding:6px 8px;text-align:left}
 table.st th{background:#f1f5f9}
 /* ===== 标记样式 ===== */
-.pin{width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.45);cursor:pointer;background:#64748b}
-.pin span{transform:rotate(45deg);display:block;text-align:center;line-height:25px;font-size:14px}
-.pin.tp{background:var(--orange)}.pin.jc{background:var(--red)}
-.pin.bz{background:var(--green)}.pin.db{background:#3b82f6}
-.pin.sel{box-shadow:0 0 0 4px rgba(37,99,235,.4),0 2px 8px rgba(0,0,0,.45)}
+/* ===== 水滴形标记 ===== */
+.drop{width:26px;height:34px;position:relative;cursor:pointer;filter:drop-shadow(0 3px 4px rgba(0,0,0,.45))}
+.drop svg{display:block;width:26px;height:34px}
+.drop path{fill:#64748b;stroke:#fff;stroke-width:1.6}
+.drop circle{fill:#fff}
+.drop.tp path{fill:var(--orange)}.drop.jc path{fill:var(--red)}
+.drop.db path{fill:#3b82f6}.drop.bz path{fill:var(--green)}
+.drop .dtxt{position:absolute;top:7px;left:0;width:26px;text-align:center;font-size:11px;font-weight:800;color:#64748b;line-height:1;pointer-events:none;text-shadow:0 1px 1px rgba(255,255,255,.9)}
+.drop.tp .dtxt{color:#b45309}.drop.jc .dtxt{color:#b91c1c}.drop.db .dtxt{color:#1d4ed8}.drop.bz .dtxt{color:#047857}
+#addBtn{position:absolute;z-index:24;transform:translate(-50%,-130%);background:linear-gradient(135deg,#2563eb,#06b6d4);color:#fff;font-size:13px;font-weight:700;padding:9px 14px;border-radius:12px;box-shadow:0 6px 20px rgba(2,6,23,.45);cursor:pointer;display:none;white-space:nowrap;border:2px solid rgba(255,255,255,.7);animation:pop .18s}
+#addBtn.open{display:block}
+#addBtn:active{transform:translate(-50%,-130%) scale(.94)}
+@keyframes pop{from{transform:translate(-50%,-130%) scale(.7);opacity:0}to{transform:translate(-50%,-130%) scale(1);opacity:1}}
 .maplibregl-marker{z-index:15}
 .nolab{width:20px;height:20px;border-radius:50%;background:rgba(37,99,235,.92);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;border:1.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);cursor:grab}
 .nolab.empty{width:12px;height:12px;background:rgba(37,99,235,.55)}
@@ -195,7 +203,6 @@ table.st th{background:#f1f5f9}
 <div id="topbar">
   <div class="brand">🏘️ 檀园村务图<small>漂沙井镇 · 3D实景</small></div>
   <input id="search" placeholder="搜索 户主 / 成员 / 编号 / 组…">
-  <button class="btn pri" id="btnAdd">➕ 标记房屋</button>
   <button class="btn ghost" id="btnStats">📊 统计</button>
   <button class="btn ghost" id="btnData">💾 数据</button>
   <button class="btn ghost" id="btnLoc" title="定位到我所在位置">📍 定位</button>
@@ -216,6 +223,9 @@ table.st th{background:#f1f5f9}
 </div>
 
 <div id="hint"></div>
+
+<!-- 点击空白处弹出的新增标记按钮 -->
+<div id="addBtn">➕ 在此新增标记</div>
 
 <div id="toolbar">
   <button class="btn ghost" id="btnPen" title="画村界/组界/田/山边界">✏️ 画区域</button>
@@ -310,6 +320,7 @@ table.st th{background:#f1f5f9}
       <li><b>🔐 账号体系</b>：管理员（您）全功能；白名单账号可看可改不能删；村民账号只看公开信息（右上角👤账号里管理）</li>
       <li><b>✏️ 画区域</b>：逐点点击画出村界、组界、某家的田/山，点「闭合区域」命名保存（可中断续画）。画区域时自动切回俯视</li>
       <li><b>🔍 识别屋顶</b>：把地图拉到要看的地块上空点它，自动框出屋顶（约九成准，误框点开即删）；漏的用 <b>📐 框屋顶</b> 补</li>
+      <li><b>➕ 新增标记</b>：点击地图空白处，弹出「在此新增标记」按钮，点它就在该位置建户（拖动地图不会误触）</li>
       <li>点标记先出<b>简略卡片</b>（编号/户主/身份/证件/电话），「查看详情」进完整档案，「删除」需二次确认</li>
       <li>有 Excel 花名册？💾数据 → 📥 Excel批量导入，按编号自动挂到屋顶上（先下载模板照着填）</li>
       <li>🏛️ 村部设一次，「🏠 回村」一键飞回；🏔️ 3D 看立体实景；数据自动存本机，<b>请定期导出备份</b></li>
@@ -391,37 +402,30 @@ document.getElementById('btnLoc').onclick=function(){
 };
 
 /* ============ 工具模式切换 ============ */
-var tool=null; // 'pin'|'pen'|'box'|'hall'
+var tool=null; // 'pen'|'box'|'hall'
 function setTool(t){
   if(t&&ROLE!=='admin'){showHint('当前身份无此权限');return;}
   if(t==='pen'||t==='box'){ // 画区域/框选自动转俯视，方便绘制
     if(map.getPitch()>1||Math.abs(map.getBearing())>1)map.easeTo({pitch:0,bearing:0,duration:500});
   }
   tool=(tool===t)?null:t;
-  document.getElementById('btnAdd').classList.toggle('on',tool==='pin');
-  document.getElementById('btnAdd').textContent=tool==='pin'?'✅ 点击地图放置标记':'➕ 标记房屋';
   document.getElementById('btnPen').classList.toggle('on',tool==='pen');
   document.getElementById('btnBox').classList.toggle('on',tool==='box');
   document.getElementById('btnHall').classList.toggle('on',tool==='hall');
   document.getElementById('penPanel').classList.toggle('open',tool==='pen');
   map.getCanvas().style.cursor=tool?'crosshair':'';
   if(tool==='box'){map.dragPan.disable();}else{map.dragPan.enable();}
-  if(tool==='pin')showHint('点击地图上任意一栋房屋的位置');
   if(tool==='box')showHint('按住拖拽，框住一个屋顶后松手');
   if(tool==='pen')showHint(DATA.draft&&DATA.draft.length?'继续画：接着点击地图加点（从中断处继续）':'逐点点击地图画边界');
   if(tool==='hall')showHint('点击村部所在位置');
   if(tool===null)showHint('');
 }
 
-/* ============ 地图点击（打点/画笔/村部） ============ */
+/* ============ 地图点击（画笔/村部/空白处新增标记） ============ */
+var addAt=null; // 待新增标记的经纬度
+function hideAddBtn(){document.getElementById('addBtn').classList.remove('open');addAt=null;}
 map.on('click',function(e){
-  if(tool==='pin'){
-    setTool('pin'); // 关闭
-    var h=newHouse(e.lngLat.lng,e.lngLat.lat);
-    DATA.houses.push(h);save();
-    drawMarker(h);
-    openDrawer(h.id,true);
-  }else if(tool==='pen'){
+  if(tool==='pen'){
     if(!DATA.draft)DATA.draft=[];
     DATA.draft.push([e.lngLat.lng,e.lngLat.lat]);
     save();drawDraft();
@@ -430,8 +434,45 @@ map.on('click',function(e){
     DATA.hall=[e.lngLat.lng,e.lngLat.lat];save();
     setTool('hall');drawHall();
     showHint('🏛️ 村部已设置！以后点「🏠 回村」直接飞回这里');
+  }else if(!tool){
+    // 空白处点击（仅管理员）：弹「在此新增标记」按钮
+    if(ROLE!=='admin'||cardId||!e.point||touchBlocked())return;
+    var feats=null;
+    try{feats=map.queryRenderedFeatures(e.point,{layers:['roofs-f','areas-f']});}catch(ex){}
+    if(feats&&feats.length)return; // 点在屋顶框/区域上：交给它们自己的弹窗
+    addAt=e.lngLat;
+    var b=document.getElementById('addBtn');
+    b.style.left=e.point.x+'px';
+    b.style.top=e.point.y+'px';
+    b.classList.add('open');
   }
 });
+map.on('move',hideAddBtn); // 拖动/缩放地图时按钮跟随消失，避免错位
+/* 触屏防误触：手指滑动超过10px后的click（拖动松开）一律忽略 */
+var touchGesture=null;
+(function(){
+  var c=map.getCanvas();
+  c.addEventListener('touchstart',function(ev){var t=ev.touches[0];touchGesture={x:t.clientX,y:t.clientY,t:Date.now(),moved:false};},{passive:true});
+  c.addEventListener('touchmove',function(ev){
+    if(!touchGesture)return;
+    var t=ev.touches[0];
+    if(Math.abs(t.clientX-touchGesture.x)+Math.abs(t.clientY-touchGesture.y)>10)touchGesture.moved=true;
+  },{passive:true});
+})();
+function touchBlocked(){
+  if(touchGesture&&touchGesture.moved&&Date.now()-touchGesture.t<1500)return true;
+  touchGesture=null;
+  return false;
+}
+document.getElementById('addBtn').onclick=function(ev){
+  ev.stopPropagation();
+  if(!addAt)return;
+  var ll=addAt;hideAddBtn();
+  var h=newHouse(ll.lng,ll.lat);
+  DATA.houses.push(h);save();
+  drawMarker(h);
+  openDrawer(h.id,true);
+};
 
 /* ============ 打点标记（图钉） ============ */
 var markers={};
@@ -443,12 +484,7 @@ function pinClass(h){
   if(h.biz&&h.biz.type&&h.biz.type!=='none')return 'bz';
   return '';
 }
-function pinIcon(h){
-  if(h.biz&&h.biz.type&&h.biz.type!=='none')return '🏢';
-  var party=h.members&&h.members.some(function(m){return m.politics==='中共党员';});
-  if(party)return '☭';
-  return '';
-}
+function pinIcon(h){return '';}
 function drawMarker(h){
   removeMarker(h.id);
   if(h.bbox){ // 屋顶框：小圆编号标签（可拖动调整位置）
@@ -469,11 +505,13 @@ function drawMarker(h){
     return;
   }
   var el=document.createElement('div');
-  el.className='pin '+pinClass(h);
-  el.innerHTML='<span>'+pinIcon(h)+'</span>';
-  el.title=(h.no?'编号'+h.no+' · ':'')+(h.label||h.owner||'未命名');
+  el.className='drop '+pinClass(h);
+  var txt=h.owner?h.owner.slice(0,1):(h.no?String(h.no).slice(0,2):'');
+  el.innerHTML='<svg viewBox="0 0 26 34"><path d="M13 1C6.4 1 1 6.4 1 13c0 7.9 9.9 16.6 11 17.6.6.6 1.5.6 2 0C15.1 29.6 25 20.9 25 13 25 6.4 19.6 1 13 1z"/><circle cx="13" cy="13" r="'+(txt?'7':'4.5')+'"/></svg>'+
+    (txt?'<span class="dtxt">'+esc(txt)+'</span>':'');
+  el.title=(h.no?'编号'+h.no+' · ':'')+(h.owner||h.label||'未命名')+(h.biz&&h.biz.type!=='none'?' · '+(h.biz.name||'经营主体'):'');
   el.onclick=function(ev){ev.stopPropagation();openCard(h.id);};
-  var mk=new maplibregl.Marker({element:el,draggable:false}).setLngLat([h.lon,h.lat]).addTo(map);
+  var mk=new maplibregl.Marker({element:el,anchor:'bottom',draggable:false}).setLngLat([h.lon,h.lat]).addTo(map);
   markers[h.id]=mk;
 }
 function removeMarker(id){if(markers[id]){markers[id].remove();delete markers[id];}}
@@ -1246,7 +1284,6 @@ function applyRole(){
   var admin=ROLE==='admin',wl=ROLE==='wl';
   ['topbar','toolbar','legend'].forEach(function(id){document.getElementById(id).style.visibility='visible';});
   // 顶栏与工具条按钮
-  document.getElementById('btnAdd').style.display=admin?'inline-flex':'none';
   document.getElementById('btnStats').style.display=(admin||wl)?'inline-flex':'none';
   document.getElementById('btnData').style.display=(admin||wl)?'inline-flex':'none';
   document.getElementById('btnAcct').style.display=admin?'inline-flex':'none';
@@ -1341,7 +1378,7 @@ map.on('click',function(){if(cardId&&Date.now()-cardAt>350)closeCard();});
   document.getElementById('legend').style.visibility='hidden';
 })();
 
-window.__VER='v3.0';
+window.__VER='v3.1';
 </script>
 </body>
 </html>
