@@ -1341,7 +1341,7 @@ function avoidOverlap(list){
   }
   list.forEach(function(h){
     var tries=0;
-    while(tries<12&&occupied.some(function(o){return distM([h.lon,h.lat],o)<20;})){
+    while(tries<12&&occupied.some(function(o){return distM([h.lon,h.lat],o)<28;})){
       h.lon+=35/(111320*Math.cos(h.lat*Math.PI/180));
       tries++;
     }
