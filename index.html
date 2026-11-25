@@ -100,7 +100,9 @@ table.st th,table.st td{border:1px solid var(--line);padding:6px 8px;text-align:
 table.st th{background:#f1f5f9}
 /* ===== 标记样式 ===== */
 /* ===== 水滴形标记 ===== */
-.drop{width:26px;height:34px;position:relative;cursor:pointer;filter:drop-shadow(0 3px 4px rgba(0,0,0,.45))}
+.drop{width:26px;height:34px;position:relative;cursor:grab;filter:drop-shadow(0 3px 4px rgba(0,0,0,.45))}
+.drop:active{cursor:grabbing}
+.pinS{width:26px;height:34px;transform-origin:50% 100%;transition:transform .15s}
 .drop svg{display:block;width:26px;height:34px}
 .drop path{fill:#64748b;stroke:#fff;stroke-width:1.6}
 .drop circle{fill:#fff}
@@ -328,7 +330,7 @@ table.st th{background:#f1f5f9}
     </div>
     <input type="file" id="impFile" accept=".json" style="display:none" onchange="importJSON(this)">
     <input type="file" id="impXls" accept=".csv,.xlsx,.xls" style="display:none" onchange="importXls(this)">
-    <p style="font-size:12px;color:#9ca3af;margin-top:12px">📥 <b>Excel批量导入</b>：先在地图上框出屋顶并给每户编上编号（点框→填编号），再把含编号的花名册 Excel 导入，数据会按编号自动挂到对应屋顶上。也支持没有地图框的编号行（会放在村中心，拖到对应房屋即可）。</p>
+    <p style="font-size:12px;color:#9ca3af;margin-top:12px">📥 <b>Excel批量导入</b>：在Excel里编好每户编号（一行一户），在任意一行「坐标」列填一个经纬度（如 113.23,27.73）——导入后自动生成全部标记点，以该点为中心排开（互不重叠），逐个拖到对应房屋即可。导出的花名册自带坐标，改完可原样导回。</p>
   </div>
 </div>
 
@@ -538,18 +540,39 @@ function drawMarker(h){
   }
   var el=document.createElement('div');
   el.className='drop '+pinClass(h);
-  var txt=h.owner?h.owner.slice(0,1):(h.no?String(h.no).slice(0,2):'');
-  el.innerHTML='<svg viewBox="0 0 26 34"><path d="M13 1C6.4 1 1 6.4 1 13c0 7.9 9.9 16.6 11 17.6.6.6 1.5.6 2 0C15.1 29.6 25 20.9 25 13 25 6.4 19.6 1 13 1z"/><circle cx="13" cy="13" r="'+(txt?'7':'4.5')+'"/></svg>'+
-    (txt?'<span class="dtxt">'+esc(txt)+'</span>':'');
+  var txt=h.owner?h.owner.slice(0,1):'';
+  if(!txt&&h.no){var nm=String(h.no).match(/[0-9A-Za-z]+$/);txt=nm?nm[0].slice(-2):String(h.no).slice(0,2);} // 取编号尾段（序号）便于区分批次
+  el.innerHTML='<div class="pinS"><svg viewBox="0 0 26 34"><path d="M13 1C6.4 1 1 6.4 1 13c0 7.9 9.9 16.6 11 17.6.6.6 1.5.6 2 0C15.1 29.6 25 20.9 25 13 25 6.4 19.6 1 13 1z"/><circle cx="13" cy="13" r="'+(txt?'7':'4.5')+'"/></svg>'+
+    (txt?'<span class="dtxt">'+esc(txt)+'</span>':'')+'</div>';
   el.title=(h.no?'编号'+h.no+' · ':'')+(h.owner||h.label||'未命名')+(h.biz&&h.biz.type!=='none'?' · '+(h.biz.name||'经营主体'):'');
-  el.onclick=function(ev){ev.stopPropagation();openCard(h.id);};
-  var mk=new maplibregl.Marker({element:el,anchor:'bottom',draggable:false}).setLngLat([h.lon,h.lat]).addTo(map);
+  el.onclick=function(ev){ev.stopPropagation();if(el._dragT&&Date.now()-el._dragT<250)return;openCard(h.id);};
+  var mk=new maplibregl.Marker({element:el,anchor:'bottom',draggable:true}).setLngLat([h.lon,h.lat]).addTo(map);
+  mk.on('dragend',function(){ // 拖到对应房屋后自动保存
+    if(ROLE!=='admin'&&ROLE!=='wl'){mk.setLngLat([h.lon,h.lat]);showHint('当前身份无编辑权限');return;}
+    var ll=mk.getLngLat();
+    h.lon=ll.lng;h.lat=ll.lat;save();
+    el._dragT=Date.now();
+  });
+  var inner=el.firstElementChild;
+  if(inner)inner.style.transform='scale('+pinFactor().toFixed(3)+')';
   markers[h.id]=mk;
 }
 function removeMarker(id){if(markers[id]){markers[id].remove();delete markers[id];}}
+/* 标记随地图缩放等比例缩放：放大略增大、缩小到1公里视野时收在最小尺寸仍清晰可见 */
+function pinFactor(){
+  var z=map.getZoom();
+  return Math.max(.45,Math.min(1.3,Math.pow(2,(z-16.5)*.5)));
+}
+function scalePins(){
+  var f='scale('+pinFactor().toFixed(3)+')';
+  var els=document.querySelectorAll('.drop');
+  for(var i=0;i<els.length;i++){var c=els[i].firstElementChild;if(c)c.style.transform=f;}
+}
+map.on('zoom',scalePins);
 function redrawAll(){
   Object.keys(markers).forEach(removeMarker);
   DATA.houses.forEach(drawMarker);
+  scalePins();
   drawRoofs();drawAreas();drawDraft();drawHall();
 }
 /* 屋顶框 GeoJSON */
@@ -1121,18 +1144,20 @@ function clearAll(){
 /* 使用说明入口在「更多」菜单 */
 
 /* ============ Excel 批量导入 ============ */
-var TPL_HEAD=['编号','户主','户主身份','身份证号','电话','组','门牌','成员姓名','与户主关系','性别','年龄','政治面貌','健康状况','年收入(元)','就业','家庭类型','补贴项目','补贴金额(元/年)','经营主体类型','经营主体名称','备注'];
+var TPL_HEAD=['编号','户主','户主身份','身份证号','电话','组','门牌','坐标','成员姓名','与户主关系','性别','年龄','政治面貌','健康状况','年收入(元)','就业','家庭类型','补贴项目','补贴金额(元/年)','经营主体类型','经营主体名称','备注'];
 function dlTemplate(){
   var rows=[TPL_HEAD,
-    ['1','张三','村组干部','430221197001011234','13800000000','董大塘组','董大塘组12号','张三','户主','男','55','中共党员','慢性病','12000','务农','脱贫户','耕地地力保护补贴','800','家庭农场','檀园种植农场',''],
-    ['1','','','','','','','张三妻','配偶','女','53','群众','健康','5000','家务','','','','','',''],
-    ['2','李四','一般村民','','','庙家组','','李四','户主','男','40','群众','健康','30000','务工','监测户','低保金','2400','','','']
+    ['1','张三','村组干部','430221197001011234','13800000000','董大塘组','董大塘组12号','113.2300,27.7350','张三','户主','男','55','中共党员','慢性病','12000','务农','脱贫户','耕地地力保护补贴','800','家庭农场','檀园种植农场',''],
+    ['1','','','','','','','','张三妻','配偶','女','53','群众','健康','5000','家务','','','','','',''],
+    ['2','李四','一般村民','','','庙家组','','','李四','户主','男','40','群众','健康','30000','务工','监测户','低保金','2400','','',''],
+    ['3','','','','','','','','','','','','','','','','','','','',''],
+    ['4','','','','','','','','','','','','','','','','','','','','']
   ];
   var csv='\ufeff'+rows.map(function(r){return r.map(function(c){return '"'+String(c==null?'':c).replace(/"/g,'""')+'"';}).join(',');}).join('\r\n');
   dl('檀园村导入模板.csv',csv,'text/csv');
-  showHint('模板已下载，用Excel打开照着填（同编号多行=同一户多人）');
+  showHint('模板已下载：只需编号+在任意一行填一次「坐标」，导入即批量生成标记点');
 }
-var HMAP={'编号':'no','房号':'no','户主':'owner','户主姓名':'owner','电话':'phone','联系电话':'phone','手机':'phone','身份证号':'oidcard','身份证':'oidcard','证件号':'oidcard','户主身份':'orole','组':'group','村组':'group','小组':'group','组别':'group','门牌':'label','门牌号':'label','别名':'label','成员姓名':'mname','姓名':'mname','人口姓名':'mname','关系':'rel','与户主关系':'rel','性别':'sex','年龄':'age','政治面貌':'politics','健康状况':'health','健康':'health','年收入':'income','年收入(元)':'income','收入':'income','就业':'job','就业就学':'job','职业':'job','家庭类型':'tags','标签':'tags','类型':'tags','补贴项目':'sname','补贴':'sname','补贴名称':'sname','补贴金额':'samount','补贴金额(元/年)':'samount','补贴金额(元)':'samount','经营主体类型':'biztype','经营主体名称':'bizname','备注':'note'};
+var HMAP={'编号':'no','房号':'no','户主':'owner','户主姓名':'owner','电话':'phone','联系电话':'phone','手机':'phone','身份证号':'oidcard','身份证':'oidcard','证件号':'oidcard','户主身份':'orole','坐标':'coord','坐标(经纬度)':'coord','经纬度':'coord','组':'group','村组':'group','小组':'group','组别':'group','门牌':'label','门牌号':'label','别名':'label','成员姓名':'mname','姓名':'mname','人口姓名':'mname','关系':'rel','与户主关系':'rel','性别':'sex','年龄':'age','政治面貌':'politics','健康状况':'health','健康':'health','年收入':'income','年收入(元)':'income','收入':'income','就业':'job','就业就学':'job','职业':'job','家庭类型':'tags','标签':'tags','类型':'tags','补贴项目':'sname','补贴':'sname','补贴名称':'sname','补贴金额':'samount','补贴金额(元/年)':'samount','补贴金额(元)':'samount','经营主体类型':'biztype','经营主体名称':'bizname','备注':'note'};
 var TAGREV={'脱贫户':'tuopin','脱贫':'tuopin','监测户':'jiance','监测':'jiance','低保户':'dibao','低保':'dibao','特困':'wubao','五保':'wubao','特困/五保':'wubao','残疾家庭':'canji','残疾':'canji','军烈属':'jun','军属':'jun'};
 var BIZREV={'无':'none','':'none','合作社':'coop','公司':'company','家庭农场':'farm','个体工商户':'shop','个体户':'shop'};
 function normHead(h){return String(h||'').replace(/[\s（）()：:、,，\/]/g,function(c){return '';}).replace(/[\s（）()：:、,，]/g,'');}
@@ -1215,16 +1240,22 @@ function parseTable(rows){
     groups[key].no=groups[key].no||(no||'');
     lastKey=key;
   }
-  var ok=0,mk=0,news=0,unmatched=[];
+  var ok=0,mk=0,news=0,unmatched=[],pending=[],anchor=null;
   order.forEach(function(key){
     var g=groups[key];
     var h=null;
     if(g.no)h=DATA.houses.filter(function(x){return x.no===g.no;})[0]||null;
     if(!h&&g.no){unmatched.push(g.no);}
-    if(!h){ // 没有匹配的地图框：建一个新记录放村中心附近
+    if(!h){ // 没有匹配的地图框：批量生成标记点
       h=newHouse((DATA.hall||VILLAGE)[0],(DATA.hall||VILLAGE)[1]);
       if(g.no)h.no=g.no;
       DATA.houses.push(h);news++;
+      // 坐标：本行有坐标→精确定位；否则进网格队列，围绕锚点排开
+      var co=null;
+      g.rows.forEach(function(o){if(!co&&o.coord)co=o.coord;});
+      var pc=parseCoord(co);
+      if(pc){h.lon=pc[0];h.lat=pc[1];if(!anchor)anchor=pc;}
+      else pending.push(h);
     }
     g.rows.forEach(function(o){
       if(o.owner)h.owner=o.owner;
@@ -1264,12 +1295,58 @@ function parseTable(rows){
     });
     ok++;
   });
+  if(pending.length){ // 网格排开：以Excel坐标（或村部/村中心）为中心，间隔约35米
+    var c0=anchor||DATA.hall||VILLAGE;
+    spreadGrid(pending,c0);
+    avoidOverlap(pending); // 与精确坐标/已有标记避让，不重叠
+    map.flyTo({center:c0,zoom:17,duration:1200});
+  }
   save();redrawAll();
   var msg='✅ 导入完成：'+ok+' 户（成员信息 '+mk+' 条）';
-  if(news)msg+='；其中 '+news+' 户未匹配到地图编号，已放在村中心，请拖到对应房屋';
+  if(news){
+    if(pending.length)msg+='；已生成 '+pending.length+' 个标记点'+(anchor?'（以Excel坐标为中心排开）':'（村部附近排开）')+'，请逐个拖到对应房屋';
+    else msg+='；其中 '+news+' 户按Excel坐标定位';
+  }
   if(unmatched.length)msg+='；未匹配编号：'+unmatched.join('、');
   showHint(msg);alert(msg);
   document.getElementById('dataM').style.display='none';
+}
+/* 坐标解析："113.23,27.73" / "113.23，27.73" / "113.23 27.73" */
+function parseCoord(s){
+  if(!s)return null;
+  var m=String(s).match(/^\s*(-?\d+(?:\.\d+)?)\s*[,，;；\s]\s*(-?\d+(?:\.\d+)?)\s*$/);
+  if(!m)return null;
+  var lng=parseFloat(m[1]),lat=parseFloat(m[2]);
+  if(!(Math.abs(lng)<=180&&Math.abs(lat)<90&&lng&&lat))return null;
+  return [lng,lat];
+}
+/* 网格排开：n个标记围绕中心点，横竖间隔约35米（20米比例尺下不重叠、好拖动） */
+function spreadGrid(list,center){
+  var n=list.length;if(!n)return;
+  var cols=Math.ceil(Math.sqrt(n)),rows=Math.ceil(n/cols);
+  var dLon=35/(111320*Math.cos(center[1]*Math.PI/180));
+  var dLat=35/111320;
+  list.forEach(function(h,i){
+    var c=i%cols,r=Math.floor(i/cols);
+    h.lon=center[0]+(c-(cols-1)/2)*dLon;
+    h.lat=center[1]-((r-(rows-1)/2)*dLat);
+  });
+}
+/* 与已定位的标记避让：重叠时向东逐格挪开 */
+function avoidOverlap(list){
+  var occupied=DATA.houses.filter(function(x){return list.indexOf(x)<0;}).map(function(x){return [x.lon,x.lat];});
+  function distM(a,b){
+    var dx=(a[0]-b[0])*111320*Math.cos(a[1]*Math.PI/180),dy=(a[1]-b[1])*111320;
+    return Math.sqrt(dx*dx+dy*dy);
+  }
+  list.forEach(function(h){
+    var tries=0;
+    while(tries<12&&occupied.some(function(o){return distM([h.lon,h.lat],o)<20;})){
+      h.lon+=35/(111320*Math.cos(h.lat*Math.PI/180));
+      tries++;
+    }
+    occupied.push([h.lon,h.lat]);
+  });
 }
 
 /* ============ 提示 ============ */
@@ -1433,7 +1510,7 @@ map.on('click',function(){if(cardId&&Date.now()-cardAt>350)closeCard();});
 })();
 
 if(window.innerWidth<=600&&document.getElementById('legend')){toggleLegend();} // 手机端图例默认折叠
-window.__VER='v3.2';
+window.__VER='v3.3';
 </script>
 </body>
 </html>
