@@ -24,9 +24,10 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 .btn.small{padding:6px 10px;font-size:12px;border-radius:8px}
 .btn.on{background:var(--red);color:#fff;animation:pulse 1.2s infinite}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.5)}50%{box-shadow:0 0 0 8px rgba(239,68,68,0)}}
-#search{flex:1;min-width:150px;max-width:340px;border:none;border-radius:10px;padding:9px 12px;font-size:14px;background:rgba(255,255,255,.95);box-shadow:0 2px 8px rgba(0,0,0,.25)}
-/* ===== 搜索结果 ===== */
-#results{position:absolute;top:60px;left:12px;z-index:19;width:min(340px,calc(100% - 24px));background:var(--card);border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.25);overflow:hidden;display:none;max-height:50vh;overflow-y:auto}
+.swrap{position:relative;flex:1;min-width:150px;max-width:340px}
+#search{width:100%;border:none;border-radius:10px;padding:9px 12px;font-size:14px;background:rgba(255,255,255,.95);box-shadow:0 2px 8px rgba(0,0,0,.25)}
+/* ===== 搜索关联下拉（百度式：结构上紧贴搜索框正下方，永不错位） ===== */
+#results{position:absolute;top:100%;left:0;right:0;margin-top:4px;z-index:50;background:var(--card);border-radius:12px;box-shadow:0 10px 32px rgba(2,6,23,.35);overflow:hidden;display:none;max-height:min(300px,38vh);overflow-y:auto;-webkit-overflow-scrolling:touch}
 #results .ritem{padding:11px 14px;border-bottom:1px solid var(--line);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px}
 #results .ritem:active{background:#f1f5f9}
 #results .rt{font-size:14px;font-weight:700}
@@ -134,7 +135,7 @@ table.st th{background:#f1f5f9}
 #guide .btn{margin-top:16px}
 @media (max-width:600px){
  #topbar{flex-wrap:wrap}
- #search{order:9;flex-basis:100%;max-width:none;min-width:0}
+ .swrap{order:9;flex-basis:100%;max-width:none;min-width:0}
  #topbar .brand small{display:none}
  #legend{bottom:120px;font-size:11px;padding:8px}
  .btn{padding:8px 10px;font-size:12px}
@@ -215,14 +216,15 @@ table.st th{background:#f1f5f9}
 
 <div id="topbar">
   <div class="brand">🏘️ 檀园村务图<small>漂沙井镇 · 3D实景</small></div>
-  <input id="search" placeholder="搜索 户主 / 成员 / 编号 / 组…">
+  <div class="swrap">
+    <input id="search" placeholder="搜索 户主 / 成员 / 编号 / 组…">
+    <div id="results"></div>
+  </div>
   <button class="btn ghost icon" id="btnStats" title="统计">📊</button>
   <button class="btn ghost icon" id="btnData" title="数据管理">💾</button>
   <button class="btn ghost icon" id="btnLoc" title="定位到我所在位置">📍</button>
   <button class="btn ghost" id="uChip" style="display:none" onclick="uSheet()">👤 <span id="uName">—</span></button>
 </div>
-
-<div id="results"></div>
 
 <div id="legend">
   <div class="lhead" onclick="toggleLegend()">图例 <span id="legArrow">▾</span></div>
@@ -1023,8 +1025,6 @@ function stopDrag(){dragging=false;}
 document.getElementById('search').addEventListener('input',function(){
   var q=this.value.trim();
   var box=document.getElementById('results');
-  // 跟随搜索框实际位置（顶栏单行/双行都适用），杜绝遮挡
-  box.style.top=(this.getBoundingClientRect().bottom+6)+'px';
   if(!q){box.style.display='none';return;}
   var hits=[];
   DATA.houses.forEach(function(h){
@@ -1527,7 +1527,7 @@ map.on('click',function(){if(cardId&&Date.now()-cardAt>350)closeCard();});
 })();
 
 if(window.innerWidth<=600&&document.getElementById('legend')){toggleLegend();} // 手机端图例默认折叠
-window.__VER='v3.4';
+window.__VER='v3.5';
 </script>
 </body>
 </html>
