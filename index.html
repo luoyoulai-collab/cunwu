@@ -27,8 +27,11 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 #search{flex:1;min-width:150px;max-width:340px;border:none;border-radius:10px;padding:9px 12px;font-size:14px;background:rgba(255,255,255,.95);box-shadow:0 2px 8px rgba(0,0,0,.25)}
 /* ===== 搜索结果 ===== */
 #results{position:absolute;top:60px;left:12px;z-index:19;width:min(340px,calc(100% - 24px));background:var(--card);border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.25);overflow:hidden;display:none;max-height:50vh;overflow-y:auto}
-#results .ritem{padding:10px 14px;border-bottom:1px solid var(--line);cursor:pointer;display:flex;justify-content:space-between;align-items:center}
-#results .ritem:active{background:#eef2ff}
+#results .ritem{padding:11px 14px;border-bottom:1px solid var(--line);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px}
+#results .ritem:active{background:#f1f5f9}
+#results .rt{font-size:14px;font-weight:700}
+#results .rt .rno{display:inline-block;background:#dbeafe;color:#1d4ed8;border-radius:6px;padding:1px 7px;font-size:11.5px;font-weight:700;margin-left:6px;vertical-align:1px}
+#results .rsub{font-size:12px;color:#64748b;margin-top:3px}
 #results .ritem b{font-size:14px}
 #results .ritem .sub{font-size:11px;color:var(--sub);margin-top:2px}
 #results .ritem .tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:3px}
@@ -115,7 +118,7 @@ table.st th{background:#f1f5f9}
 #addBtn:active{transform:translate(-50%,-130%) scale(.94)}
 @keyframes pop{from{transform:translate(-50%,-130%) scale(.7);opacity:0}to{transform:translate(-50%,-130%) scale(1);opacity:1}}
 .maplibregl-marker{z-index:15}
-.nolab{width:20px;height:20px;border-radius:50%;background:rgba(37,99,235,.92);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;border:1.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);cursor:grab}
+.nolab{height:20px;min-width:20px;width:auto;padding:0 6px;border-radius:10px;background:rgba(37,99,235,.92);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;border:1.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);cursor:grab;white-space:nowrap}
 .nolab.empty{width:12px;height:12px;background:rgba(37,99,235,.55)}
 .hallmk{font-size:26px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5));cursor:pointer}
 /* 区域信息弹窗 */
@@ -240,8 +243,7 @@ table.st th{background:#f1f5f9}
 <div id="addBtn">➕ 在此新增标记</div>
 
 <div id="toolbar">
-  <button class="btn ghost" id="btnPen" title="画村界/组界/田/山边界">✏️ 画区域</button>
-  <button class="btn ghost" id="btnBox" title="拖拽框选一个屋顶">📐 框屋顶</button>
+  <button class="btn ghost" id="btnPen" title="画村界/组界/田/山边界，闭合后也可设为屋顶">✏️ 画区域</button>
   <button class="btn ghost" id="btnDetect" title="自动识别当前视野内屋顶">🔍 识别屋顶</button>
   <button class="btn ghost" id="btnHome" title="回到村部">🏠 回村</button>
   <button class="btn ghost" id="btnMore" title="更多">⋯</button>
@@ -349,7 +351,8 @@ table.st th{background:#f1f5f9}
     <ol>
       <li><b>🔐 账号体系</b>：管理员（您）全功能；白名单账号可看可改不能删；村民账号只看公开信息（右上角👤账号里管理）</li>
       <li><b>✏️ 画区域</b>：逐点点击画出村界、组界、某家的田/山，点「闭合区域」命名保存（可中断续画）。画区域时自动切回俯视</li>
-      <li><b>🔍 识别屋顶</b>：把地图拉到要看的地块上空点它，自动框出屋顶（约九成准，误框点开即删）；漏的用 <b>📐 框屋顶</b> 补</li>
+      <li><b>🏠 描屋顶</b>：用「✏️ 画区域」沿屋檐逐点描出<b>任意朝向的屋顶形状</b>，闭合后类型选「屋顶🏠」即建为户档，可填编号/户主</li>
+      <li><b>🔍 识别屋顶</b>：把地图拉到要看的地块上空点它，自动框出屋顶（约九成准，误框点开即删）；漏的用「描屋顶」补</li>
       <li><b>➕ 新增标记</b>：点击地图空白处，弹出「在此新增标记」按钮，点它就在该位置建户（拖动地图不会误触）</li>
       <li>点标记先出<b>简略卡片</b>（编号/户主/身份/证件/电话），「查看详情」进完整档案，「删除」需二次确认</li>
       <li>有 Excel 花名册？💾数据 → 📥 Excel批量导入，按编号自动挂到屋顶上（先下载模板照着填）</li>
@@ -367,7 +370,7 @@ var LS_KEY='tanyuan_v1';
 var RELATIONS=['户主','配偶','子','女','父','母','岳父','岳母','祖父','祖母','孙子','孙女','儿媳','女婿','兄弟','姐妹','其他'];
 var HEALTH=['健康','慢性病','残疾','重大疾病','体弱多病','其他'];
 var POLITICS=['群众','中共党员','预备党员','共青团员','民主党派','其他'];
-var AREA_TYPES=[['village','村界','#7c3aed'],['group','组界','#f97316'],['field','田','#16a34a'],['forest','山','#14532d'],['water','水域','#0ea5e9'],['other','其他','#475569']];
+var AREA_TYPES=[['village','村界','#7c3aed'],['group','组界','#f97316'],['field','田','#16a34a'],['forest','山','#14532d'],['water','水域','#0ea5e9'],['roof','屋顶🏠','#2563eb'],['other','其他','#475569']];
 
 /* ============ 数据 ============ */
 var DATA=load();
@@ -437,19 +440,16 @@ document.getElementById('btnLoc').onclick=function(){
 };
 
 /* ============ 工具模式切换 ============ */
-var tool=null; // 'pen'|'box'|'hall'
+var tool=null; // 'pen'|'hall'
 function setTool(t){
   if(t&&ROLE!=='admin'){showHint('当前身份无此权限');return;}
-  if(t==='pen'||t==='box'){ // 画区域/框选自动转俯视，方便绘制
+  if(t==='pen'){ // 画区域自动转俯视，方便绘制
     if(map.getPitch()>1||Math.abs(map.getBearing())>1)map.easeTo({pitch:0,bearing:0,duration:500});
   }
   tool=(tool===t)?null:t;
   document.getElementById('btnPen').classList.toggle('on',tool==='pen');
-  document.getElementById('btnBox').classList.toggle('on',tool==='box');
   document.getElementById('penPanel').classList.toggle('open',tool==='pen');
   map.getCanvas().style.cursor=tool?'crosshair':'';
-  if(tool==='box'){map.dragPan.disable();}else{map.dragPan.enable();}
-  if(tool==='box')showHint('按住拖拽，框住一个屋顶后松手');
   if(tool==='pen')showHint(DATA.draft&&DATA.draft.length?'继续画：接着点击地图加点（从中断处继续）':'逐点点击地图画边界');
   if(tool==='hall')showHint('点击村部所在位置');
   if(tool===null)showHint('');
@@ -521,6 +521,23 @@ function pinClass(h){
 function pinIcon(h){return '';}
 function drawMarker(h){
   removeMarker(h.id);
+  if(h.ring){ // 多边形屋顶：小圆编号标签在中心（拖动=整体平移屋顶）
+    var el=document.createElement('div');
+    el.className='nolab'+(h.no?'':' empty');
+    el.textContent=h.no||'';
+    el.title=(h.no?'编号'+h.no+' · ':'')+(h.owner||h.label||'未命名');
+    el.onclick=function(ev){ev.stopPropagation();openCard(h.id);};
+    var mk=new maplibregl.Marker({element:el,draggable:true}).setLngLat([h.lon,h.lat]).addTo(map);
+    mk.on('dragend',function(){
+      var ll=mk.getLngLat();
+      var dx=ll.lng-h.lon,dy=ll.lat-h.lat;
+      h.ring=h.ring.map(function(p){return [p[0]+dx,p[1]+dy];});
+      h.lon=ll.lng;h.lat=ll.lat;
+      save();drawRoofs();
+    });
+    markers[h.id]=mk;
+    return;
+  }
   if(h.bbox){ // 屋顶框：小圆编号标签（可拖动调整位置）
     var el=document.createElement('div');
     el.className='nolab'+(h.no?'':' empty');
@@ -575,10 +592,13 @@ function redrawAll(){
   scalePins();
   drawRoofs();drawAreas();drawDraft();drawHall();
 }
-/* 屋顶框 GeoJSON */
+/* 屋顶 GeoJSON（bbox 矩形 + ring 任意形状多边形） */
 function roofsFC(){
-  var f=DATA.houses.filter(function(h){return h.bbox;}).map(function(h){
-    return {type:'Feature',geometry:{type:'Polygon',coordinates:[[[h.bbox[0],h.bbox[1]],[h.bbox[2],h.bbox[1]],[h.bbox[2],h.bbox[3]],[h.bbox[0],h.bbox[3]],[h.bbox[0],h.bbox[1]]]]},properties:{id:h.id,k:pinClass(h),no:h.no||''}};
+  var f=DATA.houses.filter(function(h){return h.bbox||h.ring;}).map(function(h){
+    var coords;
+    if(h.ring)coords=[h.ring];
+    else coords=[[[h.bbox[0],h.bbox[1]],[h.bbox[2],h.bbox[1]],[h.bbox[2],h.bbox[3]],[h.bbox[0],h.bbox[3]],[h.bbox[0],h.bbox[1]]]];
+    return {type:'Feature',geometry:{type:'Polygon',coordinates:coords},properties:{id:h.id,k:pinClass(h),no:h.no||''}};
   });
   return {type:'FeatureCollection',features:f};
 }
@@ -603,7 +623,7 @@ map.on('click','areas-f',function(e){
   var tn={village:'村界',group:'组界',field:'田',forest:'山',water:'水域',other:'其他'}[p.type]||p.type;
   document.getElementById('areaBody').innerHTML=
     '<div class="frow"><div><label class="fl">名称</label><input type="text" id="a_name" value="'+esc(p.name)+'"></div>'+
-    '<div><label class="fl">类型</label><select id="a_type">'+AREA_TYPES.map(function(t){return '<option value="'+t[0]+'"'+(p.type===t[0]?' selected':'')+'>'+t[1]+'</option>';}).join('')+'</select></div></div>'+
+    '<div><label class="fl">类型</label><select id="a_type">'+AREA_TYPES.filter(function(t){return t[0]!=='roof';}).map(function(t){return '<option value="'+t[0]+'"'+(p.type===t[0]?' selected':'')+'>'+t[1]+'</option>';}).join('')+'</select></div></div>'+
     '<textarea id="a_note" placeholder="备注（如：董大塘组 / 张三的责任田 3亩）" style="margin:8px 0">'+esc(p.note)+'</textarea>'+
     '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
     '<button class="btn pri" onclick="areaSave(\''+p.id+'\')">💾 保存</button>'+
@@ -636,6 +656,7 @@ function refreshLegend(){
   while(lg.querySelectorAll('.li.tg').length)lg.querySelectorAll('.li.tg')[0].remove();
   var counts={};DATA.polys.forEach(function(p){counts[p.type]=(counts[p.type]||0)+1;});
   AREA_TYPES.forEach(function(t){
+    if(t[0]==='roof')return; // 屋顶不进区域图例（它是户档）
     var d=document.createElement('div');
     d.className='li tg'+(areaVis[t[0]]?'':' off');
     d.innerHTML='<span class="sw" style="background:'+t[2]+'"></span>'+t[1]+(counts[t[0]]?'('+counts[t[0]]+')':'');
@@ -657,18 +678,39 @@ function penClear(){if(DATA.draft&&DATA.draft.length&&confirm('清除当前未�
 function penClose(){
   if(!DATA.draft||DATA.draft.length<3){showHint('至少要 3 个点才能围成区域');return;}
   var names=[];DATA.polys.forEach(function(p){if(p.name)names.push(p.name);});
-  var html='<div class="frow"><div><label class="fl">区域名称（如：檀园村 / 董大塘组 / 张三的田）</label><input type="text" id="p_name" list="p_names"><datalist id="p_names">'+names.map(function(n){return '<option value="'+esc(n)+'">';}).join('')+'</datalist></div></div>'+
-  '<div class="frow"><div><label class="fl">类型</label><select id="p_type">'+AREA_TYPES.map(function(t){return '<option value="'+t[0]+'">'+t[1]+'</option>';}).join('')+'</select></div></div>'+
+  var html='<div class="frow"><div><label class="fl" id="p_nlab">区域名称（如：檀园村 / 董大塘组 / 张三的田）</label><input type="text" id="p_name" list="p_names"><datalist id="p_names">'+names.map(function(n){return '<option value="'+esc(n)+'">';}).join('')+'</datalist></div></div>'+
+  '<div class="frow"><div><label class="fl">类型</label><select id="p_type" onchange="penTypeChg()">'+AREA_TYPES.map(function(t){return '<option value="'+t[0]+'">'+t[1]+'</option>';}).join('')+'</select></div></div>'+
   '<textarea id="p_note" placeholder="备注（面积、权属等）"></textarea>'+
-  '<div style="display:flex;gap:8px;margin-top:10px"><button class="btn pri" onclick="penSave()">💾 保存区域</button><button class="btn" onclick="penBack()">返回继续画</button></div>';
+  '<div style="display:flex;gap:8px;margin-top:10px"><button class="btn pri" onclick="penSave()">💾 保存</button><button class="btn" onclick="penBack()">返回继续画</button></div>';
   document.getElementById('penTip').innerHTML=html;
 }
-function penBack(){document.getElementById('penTip').innerHTML='✏️ 逐点点击地图画边界：点两个点连成线，一路点下去即可。<b>中断不怕</b>，下次点「画区域」接着末尾继续画。';}
+function penTypeChg(){
+  var roof=document.getElementById('p_type').value==='roof';
+  document.getElementById('p_nlab').textContent=roof?'房屋编号（可留空，稍后也可在详情里填）':'区域名称（如：檀园村 / 董大塘组 / 张三的田）';
+  document.getElementById('p_note').style.display=roof?'none':'block';
+}
+function penBack(){document.getElementById('penTip').innerHTML='✏️ 逐点点击地图画边界：点两个点连成线，一路点下去即可。<b>中断不怕</b>，下次点「画区域」接着末尾继续画。类型选「屋顶🏠」可沿屋檐描出任意朝向的屋顶。';}
 function penSave(){
   var name=document.getElementById('p_name').value.trim();
-  if(!name){showHint('请填写区域名称');return;}
+  var type=document.getElementById('p_type').value;
   var ring=DATA.draft.slice();ring.push(ring[0]);
-  DATA.polys.push({id:uid(),name:name,type:document.getElementById('p_type').value,note:document.getElementById('p_note').value.trim(),ring:ring});
+  if(type==='roof'){ // 屋顶：任意形状多边形，直接生成户档标记
+    var cx=0,cy=0;
+    for(var i=0;i<ring.length-1;i++){cx+=ring[i][0];cy+=ring[i][1];}
+    cx/=ring.length-1;cy/=ring.length-1;
+    var h=newHouse(cx,cy);
+    h.ring=ring;
+    if(name)h.no=name;
+    DATA.houses.push(h);
+    DATA.draft=null;save();
+    drawAreas();drawDraft();refreshLegend();penBack();setTool(null);
+    drawMarker(h);drawRoofs();
+    openDrawer(h.id,true);
+    showHint('✅ 屋顶已建为户档，可在详情里填编号/户主');
+    return;
+  }
+  if(!name){showHint('请填写区域名称');return;}
+  DATA.polys.push({id:uid(),name:name,type:type,note:document.getElementById('p_note').value.trim(),ring:ring});
   DATA.draft=null;save();
   drawAreas();drawDraft();refreshLegend();penBack();
   showHint('✅ 区域「'+name+'」已保存');
@@ -689,7 +731,6 @@ function moreSet(){
   setTool('hall');
 }
 document.getElementById('btnPen').onclick=function(){setTool('pen');};
-document.getElementById('btnBox').onclick=function(){setTool('box');};
 document.getElementById('btnHome').onclick=function(){goHome();};
 document.getElementById('btnMore').onclick=function(){
   if(window.innerWidth<=600&&!document.getElementById('legend').classList.contains('folded'))toggleLegend();
@@ -708,62 +749,7 @@ function toggleLegend(){
   document.getElementById('legArrow').textContent=l.classList.contains('folded')?'▸':'▾';
 }
 
-/* ============ 手动框选屋顶 ============ */
-var boxing=null;
-map.on('mousedown',function(e){
-  if(tool!=='box')return;
-  boxing={w:e.lngLat.lng,s:e.lngLat.lat,e:e.lngLat.lng,n:e.lngLat.lat};
-});
-map.on('mousemove',function(e){
-  if(!boxing)return;
-  boxing.e=e.lngLat.lng;boxing.n=e.lngLat.lat;
-  map.getSource('boxing').setData({type:'Feature',geometry:{type:'Polygon',coordinates:[[[boxing.w,boxing.s],[boxing.e,boxing.s],[boxing.e,boxing.n],[boxing.w,boxing.n],[boxing.w,boxing.s]]]}});
-});
-map.on('mouseup',function(e){
-  if(!boxing)return;
-  var b=boxing;boxing=null;
-  map.getSource('boxing').setData(emptyFC());
-  var w=Math.min(b.w,b.e),e2=Math.max(b.w,b.e),s=Math.min(b.s,b.n),n2=Math.max(b.s,b.n);
-  // 屏幕上至少12像素
-  var p1=map.project([w,s]),p2=map.project([e2,n2]);
-  if(Math.abs(p2.x-p1.x)<12||Math.abs(p2.y-p1.y)<12){showHint('框太小了，拖大一点');return;}
-  var h=newHouse((w+e2)/2,(s+n2)/2);
-  h.bbox=[w,s,e2,n2];
-  DATA.houses.push(h);save();
-  drawMarker(h);drawRoofs();
-  openDrawer(h.id,true);
-});
-/* 触屏框选 */
-var cv=map.getCanvas();
-cv.addEventListener('touchstart',function(ev){
-  if(tool!=='box')return;
-  ev.preventDefault();
-  var t=ev.touches[0];
-  var ll=map.unproject([t.clientX,t.clientY]);
-  boxing={w:ll.lng,s:ll.lat,e:ll.lng,n:ll.lat};
-},{passive:false});
-cv.addEventListener('touchmove',function(ev){
-  if(!boxing)return;
-  ev.preventDefault();
-  var t=ev.touches[0];
-  var ll=map.unproject([t.clientX,t.clientY]);
-  boxing.e=ll.lng;boxing.n=ll.lat;
-  map.getSource('boxing').setData({type:'Feature',geometry:{type:'Polygon',coordinates:[[[boxing.w,boxing.s],[boxing.e,boxing.s],[boxing.e,boxing.n],[boxing.w,boxing.n],[boxing.w,boxing.s]]]}});
-},{passive:false});
-cv.addEventListener('touchend',function(ev){
-  if(!boxing)return;
-  ev.preventDefault();
-  var b=boxing;boxing=null;
-  map.getSource('boxing').setData(emptyFC());
-  var w=Math.min(b.w,b.e),e2=Math.max(b.w,b.e),s=Math.min(b.s,b.n),n2=Math.max(b.s,b.n);
-  var p1=map.project([w,s]),p2=map.project([e2,n2]);
-  if(Math.abs(p2.x-p1.x)<12||Math.abs(p2.y-p1.y)<12){showHint('框太小了，拖大一点');return;}
-  var h=newHouse((w+e2)/2,(s+n2)/2);
-  h.bbox=[w,s,e2,n2];
-  DATA.houses.push(h);save();
-  drawMarker(h);drawRoofs();
-  openDrawer(h.id,true);
-},{passive:false});
+/* ============ 手动框选屋顶（已整合进「画区域」→类型选屋顶） ============ */
 
 /* ============ 屋顶自动识别 ============ */
 var TZ=18;
@@ -808,6 +794,13 @@ function detectRoofs(bb){
         boxes.forEach(function(bx){
           // 与已有标记去重
           var dup=DATA.houses.some(function(h){
+            if(h.ring){ // 多边形屋顶：取其包围盒做重叠判定
+              var w=999,s=999,e=-999,n=-999;
+              h.ring.forEach(function(p){w=Math.min(w,p[0]);s=Math.min(s,p[1]);e=Math.max(e,p[0]);n=Math.max(n,p[1]);});
+              var ix=Math.min(bx[2],e)-Math.max(bx[0],w);
+              var iy=Math.min(bx[3],n)-Math.max(bx[1],s);
+              return ix>0&&iy>0;
+            }
             if(!h.bbox&&h.lon!==undefined){
               return bx[0]<=h.lon&&h.lon<=bx[2]&&bx[1]<=h.lat&&h.lat<=bx[3];
             }
@@ -1030,19 +1023,36 @@ function stopDrag(){dragging=false;}
 document.getElementById('search').addEventListener('input',function(){
   var q=this.value.trim();
   var box=document.getElementById('results');
+  // 跟随搜索框实际位置（顶栏单行/双行都适用），杜绝遮挡
+  box.style.top=(this.getBoundingClientRect().bottom+6)+'px';
   if(!q){box.style.display='none';return;}
-  var hits=DATA.houses.filter(function(h){
-    if((h.owner||'').indexOf(q)>=0||(h.label||'').indexOf(q)>=0||(h.no||'').indexOf(q)>=0||(h.group||'').indexOf(q)>=0)return true;
-    return (h.members||[]).some(function(m){return (m.name||'').indexOf(q)>=0;});
+  var hits=[];
+  DATA.houses.forEach(function(h){
+    var hitMember=null;
+    (h.members||[]).forEach(function(m){
+      if(!hitMember&&(m.name||'').indexOf(q)>=0)hitMember=m;
+    });
+    if((h.owner||'').indexOf(q)>=0||(h.label||'').indexOf(q)>=0||(h.no||'').indexOf(q)>=0||(h.group||'').indexOf(q)>=0||hitMember){
+      hits.push({h:h,m:((h.owner||'').indexOf(q)<0?hitMember:null)});
+    }
   });
   if(!hits.length){box.innerHTML='<div class="ritem" style="color:#9ca3af">未找到「'+esc(q)+'」，试试其他关键词</div>';box.style.display='block';return;}
-  box.innerHTML=hits.map(function(h){
-    var sub=[];
-    if(h.no)sub.push('编号'+h.no);
-    if(h.group)sub.push(h.group);
-    return '<div class="ritem" onclick="flyTo(\''+h.id+'\')"><div><b>'+esc(h.owner||h.label||(h.no?'#'+h.no:'未命名'))+'</b>'+
-    (sub.length?'<div class="sub">'+esc(sub.join(' · '))+'</div>':'')+
-    '<div class="tags">'+tagsOf(h)+'</div></div><span style="color:#9ca3af">›</span></div>';
+  box.innerHTML=hits.map(function(r){
+    var h=r.h,m=r.m;
+    var owner=h.owner||h.label||'未登记户';
+    var title,sub;
+    if(m){ // 命中家庭成员：显示成员+关系+对应户主
+      title='👤 '+esc(m.name)+'（'+esc(m.rel||'成员')+'）';
+      sub='户主：'+esc(h.owner||'未登记')+(h.group?' · '+esc(h.group):'');
+    }else{ // 命中户主/编号/组
+      title=esc(owner)+(h.no?'<span class="rno">'+esc(h.no)+'</span>':'');
+      sub=h.group?esc(h.group):'';
+    }
+    if(m&&h.no)title+='<span class="rno">'+esc(h.no)+'</span>';
+    if(!sub)sub=h.owner&&h.label?esc(h.label):'';
+    return '<div class="ritem" onclick="flyTo(\''+h.id+'\')"><div style="flex:1;min-width:0"><div class="rt">'+title+'</div>'+
+      (sub?'<div class="rsub">'+sub+'</div>':'')+
+      '<div class="tags">'+tagsOf(h)+'</div></div><span style="color:#9ca3af">›</span></div>';
   }).join('');
   box.style.display='block';
 });
@@ -1298,7 +1308,6 @@ function parseTable(rows){
   if(pending.length){ // 网格排开：以Excel坐标（或村部/村中心）为中心，间隔约35米
     var c0=anchor||DATA.hall||VILLAGE;
     spreadGrid(pending,c0);
-    avoidOverlap(pending); // 与精确坐标/已有标记避让，不重叠
     map.flyTo({center:c0,zoom:17,duration:1200});
   }
   save();redrawAll();
@@ -1320,33 +1329,41 @@ function parseCoord(s){
   if(!(Math.abs(lng)<=180&&Math.abs(lat)<90&&lng&&lat))return null;
   return [lng,lat];
 }
-/* 网格排开：n个标记围绕中心点，横竖间隔约35米（20米比例尺下不重叠、好拖动） */
+/* 网格排开：围绕中心螺旋向外找空位（间隔35米，锚点被占时紧邻排开，不会推远） */
 function spreadGrid(list,center){
   var n=list.length;if(!n)return;
-  var cols=Math.ceil(Math.sqrt(n)),rows=Math.ceil(n/cols);
   var dLon=35/(111320*Math.cos(center[1]*Math.PI/180));
   var dLat=35/111320;
-  list.forEach(function(h,i){
-    var c=i%cols,r=Math.floor(i/cols);
-    h.lon=center[0]+(c-(cols-1)/2)*dLon;
-    h.lat=center[1]-((r-(rows-1)/2)*dLat);
-  });
-}
-/* 与已定位的标记避让：重叠时向东逐格挪开 */
-function avoidOverlap(list){
   var occupied=DATA.houses.filter(function(x){return list.indexOf(x)<0;}).map(function(x){return [x.lon,x.lat];});
   function distM(a,b){
-    var dx=(a[0]-b[0])*111320*Math.cos(a[1]*Math.PI/180),dy=(a[1]-b[1])*111320;
+    var dx=(a[0]-b[0])*111320*Math.cos(center[1]*Math.PI/180),dy=(a[1]-b[1])*111320;
     return Math.sqrt(dx*dx+dy*dy);
   }
-  list.forEach(function(h){
-    var tries=0;
-    while(tries<12&&occupied.some(function(o){return distM([h.lon,h.lat],o)<28;})){
-      h.lon+=35/(111320*Math.cos(h.lat*Math.PI/180));
-      tries++;
+  var used=[];
+  function free(lon,lat){
+    if(Math.abs(lon-center[0])>600*dLon||Math.abs(lat-center[1])>600*dLat)return false; // 兜底
+    for(var i=0;i<occupied.length;i++)if(distM([lon,lat],occupied[i])<28)return false;
+    for(var j=0;j<used.length;j++)if(distM([lon,lat],used[j])<28)return false;
+    return true;
+  }
+  var ring=0,placed=0;
+  while(placed<n&&ring<=40){
+    var cands=[];
+    for(var dx=-ring;dx<=ring;dx++)for(var dy=-ring;dy<=ring;dy++){
+      if(Math.max(Math.abs(dx),Math.abs(dy))!==ring)continue; // 只要当前外圈
+      cands.push([center[0]+dx*dLon,center[1]+dy*dLat]);
     }
-    occupied.push([h.lon,h.lat]);
-  });
+    cands.sort(function(a,b){return distM(a,center)-distM(b,center);});
+    for(var k=0;k<cands.length&&placed<n;k++){
+      if(free(cands[k][0],cands[k][1])){
+        var h=list[placed];
+        h.lon=cands[k][0];h.lat=cands[k][1];
+        used.push([h.lon,h.lat]);
+        placed++;
+      }
+    }
+    ring++;
+  }
 }
 
 /* ============ 提示 ============ */
@@ -1416,7 +1433,7 @@ function applyRole(){
   // 顶栏与工具条按钮
   document.getElementById('btnStats').style.display=(admin||wl)?'inline-flex':'none';
   document.getElementById('btnData').style.display=(admin||wl)?'inline-flex':'none';
-  ['btnPen','btnBox','btnDetect'].forEach(function(b){var el=document.getElementById(b);if(el)el.style.display=admin?'inline-flex':'none';});
+  ['btnPen','btnDetect'].forEach(function(b){var el=document.getElementById(b);if(el)el.style.display=admin?'inline-flex':'none';});
   document.getElementById('miHall').style.display=admin?'flex':'none';
   // 数据面板里高危按钮
   document.getElementById('dBtnImportBak').style.display=admin?'inline-flex':'none';
@@ -1510,7 +1527,7 @@ map.on('click',function(){if(cardId&&Date.now()-cardAt>350)closeCard();});
 })();
 
 if(window.innerWidth<=600&&document.getElementById('legend')){toggleLegend();} // 手机端图例默认折叠
-window.__VER='v3.3';
+window.__VER='v3.4';
 </script>
 </body>
 </html>
