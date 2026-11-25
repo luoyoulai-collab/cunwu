@@ -131,11 +131,12 @@ table.st th{background:#f1f5f9}
  #topbar{flex-wrap:wrap}
  #search{order:9;flex-basis:100%;max-width:none;min-width:0}
  #topbar .brand small{display:none}
- #legend{bottom:130px;font-size:11px;padding:8px}
+ #legend{bottom:120px;font-size:11px;padding:8px}
  .btn{padding:8px 10px;font-size:12px}
  #penPanel{top:auto;bottom:150px;right:8px;left:8px;width:auto}
  #toolbar{left:8px;right:8px;transform:none;justify-content:flex-start}
- #userbar{top:auto;bottom:150px;right:8px}
+ .maplibregl-ctrl-bottom-right{bottom:64px;right:8px}
+ #legend{bottom:132px}
 }
 /* ===== 登录 ===== */
 #login{position:absolute;inset:0;z-index:99;background:radial-gradient(1200px 600px at 70% -10%,#1e3a8a 0%,#0f172a 55%,#020617 100%);display:flex;align-items:center;justify-content:center;padding:20px}
@@ -152,9 +153,20 @@ table.st th{background:#f1f5f9}
 #login .lbtn:active{transform:scale(.98)}
 #login .lnote{font-size:11px;color:#64748b;text-align:center;margin-top:14px;line-height:1.7}
 #login .lerr{font-size:12px;color:#fca5a5;text-align:center;margin:-4px 0 8px;display:none}
-/* ===== 用户条 ===== */
-#userbar{position:absolute;top:64px;right:12px;z-index:20;display:flex;align-items:center;gap:6px;background:rgba(15,23,42,.72);border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:6px 10px;cursor:pointer;white-space:nowrap;color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.3)}
-#userbar .rl{font-size:11px;color:#fff;opacity:.85}
+/* ===== 用户芯片与底部菜单 ===== */
+#uChip{max-width:120px;overflow:hidden;text-overflow:ellipsis}
+.btn.icon{padding:9px 11px;font-size:15px}
+.sheet{position:absolute;inset:0;z-index:44;background:rgba(15,23,42,.45);display:none;align-items:flex-end;justify-content:center}
+.sheet.open{display:flex}
+.mpanel{background:#fff;border-radius:18px 18px 0 0;width:min(420px,100vw);padding:10px 12px calc(14px + env(safe-area-inset-bottom));box-shadow:0 -10px 40px rgba(2,6,23,.35)}
+.mi{display:flex;flex-direction:column;align-items:flex-start;width:100%;border:none;background:#f8fafc;border-radius:12px;padding:11px 14px;font-size:14.5px;font-weight:600;cursor:pointer;margin-bottom:7px;color:var(--txt);text-align:left}
+.mi small{font-weight:400;font-size:11.5px;color:#94a3b8;margin-top:2px}
+.mi:active{background:#eef2ff}
+.mu{padding:10px 14px 4px;font-size:15px}
+.mver{text-align:center;font-size:11px;color:#94a3b8;padding:8px 0 2px}
+#legend .lhead{font-weight:700;color:#334155;cursor:pointer;user-select:none;padding-bottom:2px}
+#legend.folded .lhead{padding-bottom:0}
+#legend.folded #legBody{display:none}
 /* ===== 简略卡片 ===== */
 #card{position:absolute;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);z-index:35;width:min(360px,calc(100vw - 24px));background:rgba(255,255,255,.97);border-radius:16px;box-shadow:0 16px 50px rgba(2,6,23,.45);opacity:0;pointer-events:none;transition:.22s;overflow:hidden}
 #card.open{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
@@ -192,27 +204,24 @@ table.st th{background:#f1f5f9}
   </div>
 </div>
 
-<!-- 用户条 -->
-<div id="userbar" onclick="logoutAsk()" style="display:none" title="点击退出登录">
-  <span id="uName">—</span><span class="rl" id="uRole">—</span><span style="font-size:12px">⎋</span>
-</div>
-
+<!-- 用户条已并入顶栏 👤 芯片 -->
 <!-- 简略卡片 -->
 <div id="card"></div>
 
 <div id="topbar">
   <div class="brand">🏘️ 檀园村务图<small>漂沙井镇 · 3D实景</small></div>
   <input id="search" placeholder="搜索 户主 / 成员 / 编号 / 组…">
-  <button class="btn ghost" id="btnStats">📊 统计</button>
-  <button class="btn ghost" id="btnData">💾 数据</button>
-  <button class="btn ghost" id="btnLoc" title="定位到我所在位置">📍 定位</button>
-  <button class="btn ghost" id="btnAcct" style="display:none" onclick="openAcct()">👤 账号</button>
-  <button class="btn ghost" id="btnHelp">❓</button>
+  <button class="btn ghost icon" id="btnStats" title="统计">📊</button>
+  <button class="btn ghost icon" id="btnData" title="数据管理">💾</button>
+  <button class="btn ghost icon" id="btnLoc" title="定位到我所在位置">📍</button>
+  <button class="btn ghost" id="uChip" style="display:none" onclick="uSheet()">👤 <span id="uName">—</span></button>
 </div>
 
 <div id="results"></div>
 
 <div id="legend">
+  <div class="lhead" onclick="toggleLegend()">图例 <span id="legArrow">▾</span></div>
+  <div id="legBody">
   <div class="li"><span class="dot" style="background:#64748b"></span>普通住户</div>
   <div class="li"><span class="dot" style="background:#f59e0b"></span>脱贫户</div>
   <div class="li"><span class="dot" style="background:#ef4444"></span>监测户</div>
@@ -220,6 +229,7 @@ table.st th{background:#f1f5f9}
   <div class="li"><span class="dot" style="background:#10b981"></span>经营主体</div>
   <div class="sep"></div>
   <div class="li" style="font-weight:700;color:#334155">区域图层(点显隐)</div>
+  </div>
 </div>
 
 <div id="hint"></div>
@@ -231,10 +241,28 @@ table.st th{background:#f1f5f9}
   <button class="btn ghost" id="btnPen" title="画村界/组界/田/山边界">✏️ 画区域</button>
   <button class="btn ghost" id="btnBox" title="拖拽框选一个屋顶">📐 框屋顶</button>
   <button class="btn ghost" id="btnDetect" title="自动识别当前视野内屋顶">🔍 识别屋顶</button>
-  <button class="btn ghost" id="btnHall" title="设置村部位置">🏛️ 村部</button>
-  <button class="btn ghost" onclick="pitchTo(60)" title="倾斜视角">🏔️ 3D</button>
-  <button class="btn ghost" onclick="pitchTo(0)" title="俯视视角">🗺️ 俯视</button>
-  <button class="btn ghost" onclick="goHome()">🏠 回村</button>
+  <button class="btn ghost" id="btnHome" title="回到村部">🏠 回村</button>
+  <button class="btn ghost" id="btnMore" title="更多">⋯</button>
+</div>
+
+<!-- 更多菜单（底部弹出） -->
+<div id="moreM" class="sheet" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="mpanel">
+    <button class="mi" id="miHall" onclick="moreSet()">🏛️ 设置村部<small>设置后「回村」一键直达</small></button>
+    <button class="mi" onclick="pitchTo(60);document.getElementById('moreM').classList.remove('open')">🏔️ 3D 实景视角<small>倾斜看立体村庄</small></button>
+    <button class="mi" onclick="pitchTo(0);document.getElementById('moreM').classList.remove('open')">🗺️ 俯视视角<small>画区域更方便</small></button>
+    <button class="mi" onclick="document.getElementById('guide').classList.add('open');document.getElementById('moreM').classList.remove('open')">❓ 使用说明</button>
+    <div class="mver">檀园村务图 v3.2 · 数据仅存本机</div>
+  </div>
+</div>
+
+<!-- 用户菜单（底部弹出） -->
+<div id="uM" class="sheet" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="mpanel">
+    <div class="mu">👤 <b id="uName2">—</b> <span id="uRole2" style="color:#2563eb"></span></div>
+    <button class="mi" id="miAcct" onclick="openAcct()">👤 账号管理<small>白名单 / 村民账号</small></button>
+    <button class="mi" onclick="logoutAsk()">⎋ 退出登录</button>
+  </div>
 </div>
 
 <!-- 画笔面板 -->
@@ -323,7 +351,8 @@ table.st th{background:#f1f5f9}
       <li><b>➕ 新增标记</b>：点击地图空白处，弹出「在此新增标记」按钮，点它就在该位置建户（拖动地图不会误触）</li>
       <li>点标记先出<b>简略卡片</b>（编号/户主/身份/证件/电话），「查看详情」进完整档案，「删除」需二次确认</li>
       <li>有 Excel 花名册？💾数据 → 📥 Excel批量导入，按编号自动挂到屋顶上（先下载模板照着填）</li>
-      <li>🏛️ 村部设一次，「🏠 回村」一键飞回；🏔️ 3D 看立体实景；数据自动存本机，<b>请定期导出备份</b></li>
+      <li><b>🏠 回村</b>：一键飞回村部（在「⋯ 更多」里用「设置村部」定好位置后生效）</li>
+      <li>🏔️ 想看立体实景：「⋯ 更多」→ 3D 实景视角；画区域/框屋顶会自动切回俯视</li>
     </ol>
     <button class="btn pri" onclick="localStorage.setItem('tanyuan_guide','1');document.getElementById('guide').classList.remove('open')">开始使用</button>
   </div>
@@ -387,9 +416,13 @@ map.on('load',function(){
   if(!localStorage.getItem('tanyuan_guide'))document.getElementById('guide').classList.add('open');
 });
 function goHome(){
-  var c=DATA.hall||VILLAGE,z=DATA.hall?17:14.2;
-  map.flyTo({center:c,zoom:z,pitch:DATA.hall?45:45,bearing:-20,duration:1200});
-  if(DATA.hall)showHint('已回到村部');
+  if(DATA.hall){
+    map.flyTo({center:DATA.hall,zoom:17,pitch:0,bearing:0,duration:1200});
+    showHint('🏠 已回到村部');
+  }else{
+    map.flyTo({center:VILLAGE,zoom:14.2,pitch:0,bearing:0,duration:1200});
+    showHint('还没设置村部：点底部「⋯」→ 设置村部');
+  }
 }
 function pitchTo(p){map.easeTo({pitch:p,duration:600});}
 document.getElementById('btnLoc').onclick=function(){
@@ -411,7 +444,6 @@ function setTool(t){
   tool=(tool===t)?null:t;
   document.getElementById('btnPen').classList.toggle('on',tool==='pen');
   document.getElementById('btnBox').classList.toggle('on',tool==='box');
-  document.getElementById('btnHall').classList.toggle('on',tool==='hall');
   document.getElementById('penPanel').classList.toggle('open',tool==='pen');
   map.getCanvas().style.cursor=tool?'crosshair':'';
   if(tool==='box'){map.dragPan.disable();}else{map.dragPan.enable();}
@@ -576,7 +608,8 @@ function toggleArea(t){
   areaVis[t]=!areaVis[t];applyAreaVis();refreshLegend();
 }
 function refreshLegend(){
-  var lg=document.getElementById('legend');
+  var lg=document.getElementById('legBody');
+  if(!lg)return;
   while(lg.querySelectorAll('.li.tg').length)lg.querySelectorAll('.li.tg')[0].remove();
   var counts={};DATA.polys.forEach(function(p){counts[p.type]=(counts[p.type]||0)+1;});
   AREA_TYPES.forEach(function(t){
@@ -625,12 +658,32 @@ function drawHall(){
   var el=document.createElement('div');el.className='hallmk';el.textContent='🏛️';el.title='村部';
   hallMk=new maplibregl.Marker({element:el}).setLngLat(DATA.hall).addTo(map);
 }
-document.getElementById('btnHall').onclick=function(){
+/* 设置村部（从「更多」菜单进入） */
+function moreSet(){
+  document.getElementById('moreM').classList.remove('open');
+  if(ROLE!=='admin'){showHint('当前身份无此权限');return;}
   if(DATA.hall&&!confirm('村部已设置过，重新设置位置？'))return;
   setTool('hall');
-};
+}
 document.getElementById('btnPen').onclick=function(){setTool('pen');};
 document.getElementById('btnBox').onclick=function(){setTool('box');};
+document.getElementById('btnHome').onclick=function(){goHome();};
+document.getElementById('btnMore').onclick=function(){
+  if(window.innerWidth<=600&&!document.getElementById('legend').classList.contains('folded'))toggleLegend();
+  document.getElementById('moreM').classList.add('open');
+};
+function uSheet(){
+  var rn=roleName();
+  document.getElementById('uName2').textContent=ME.name;
+  document.getElementById('uRole2').textContent=(ME.name!==rn)?('· '+rn):'';
+  document.getElementById('miAcct').style.display=ROLE==='admin'?'flex':'none';
+  document.getElementById('uM').classList.add('open');
+}
+function toggleLegend(){
+  var l=document.getElementById('legend');
+  l.classList.toggle('folded');
+  document.getElementById('legArrow').textContent=l.classList.contains('folded')?'▸':'▾';
+}
 
 /* ============ 手动框选屋顶 ============ */
 var boxing=null;
@@ -1065,7 +1118,7 @@ function clearAll(){
   DATA={houses:[],polys:[],draft:null,hall:null};save();redrawAll();refreshLegend();showHint('已清空');
   document.getElementById('dataM').style.display='none';
 }
-document.getElementById('btnHelp').onclick=function(){document.getElementById('guide').classList.add('open');};
+/* 使用说明入口在「更多」菜单 */
 
 /* ============ Excel 批量导入 ============ */
 var TPL_HEAD=['编号','户主','户主身份','身份证号','电话','组','门牌','成员姓名','与户主关系','性别','年龄','政治面貌','健康状况','年收入(元)','就业','家庭类型','补贴项目','补贴金额(元/年)','经营主体类型','经营主体名称','备注'];
@@ -1286,8 +1339,8 @@ function applyRole(){
   // 顶栏与工具条按钮
   document.getElementById('btnStats').style.display=(admin||wl)?'inline-flex':'none';
   document.getElementById('btnData').style.display=(admin||wl)?'inline-flex':'none';
-  document.getElementById('btnAcct').style.display=admin?'inline-flex':'none';
-  ['btnPen','btnBox','btnDetect','btnHall'].forEach(function(b){var el=document.getElementById(b);if(el)el.style.display=admin?'inline-flex':'none';});
+  ['btnPen','btnBox','btnDetect'].forEach(function(b){var el=document.getElementById(b);if(el)el.style.display=admin?'inline-flex':'none';});
+  document.getElementById('miHall').style.display=admin?'flex':'none';
   // 数据面板里高危按钮
   document.getElementById('dBtnImportBak').style.display=admin?'inline-flex':'none';
   document.getElementById('dBtnImpXls').style.display=admin?'inline-flex':'none';
@@ -1296,15 +1349,16 @@ function applyRole(){
   document.getElementById('dBtnExpCsv').style.display=(admin||wl)?'inline-flex':'none';
   // 抽屉删除按钮
   document.getElementById('btnDel').style.display=admin?'inline-flex':'none';
-  // 用户条
-  document.getElementById('userbar').style.display='flex';
+  // 顶栏用户芯片：显示姓名，点击弹出账号菜单
+  document.getElementById('uChip').style.display='inline-flex';
+  document.getElementById('uChip').title=ME.name+' · '+roleName();
   document.getElementById('uName').textContent=ME.name;
-  document.getElementById('uRole').textContent=roleName();
   if(ROLE==='villager')showHint('村民模式：仅显示公开信息');
 }
 /* 账号管理 */
 function openAcct(){
   if(ROLE!=='admin')return;
+  document.getElementById('uM').classList.remove('open');
   var u=getUsers();
   document.getElementById('wlList').innerHTML=u.wl.length?u.wl.map(function(w,i){
     return '<div class="acct-row"><b>'+esc(w.name||w.acc)+' · '+esc(w.acc)+'</b><button class="btn small" style="background:#fee2e2;color:#b91c1c" onclick="wlDel('+i+')">移除</button></div>';
@@ -1378,7 +1432,8 @@ map.on('click',function(){if(cardId&&Date.now()-cardAt>350)closeCard();});
   document.getElementById('legend').style.visibility='hidden';
 })();
 
-window.__VER='v3.1';
+if(window.innerWidth<=600&&document.getElementById('legend')){toggleLegend();} // 手机端图例默认折叠
+window.__VER='v3.2';
 </script>
 </body>
 </html>
