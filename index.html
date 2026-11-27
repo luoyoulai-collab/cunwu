@@ -198,15 +198,20 @@ table.st th{background:#f1f5f9}
     <h1>🏘️ 檀园村务图</h1>
     <div class="sub">漂沙井镇 · 3D实景村务管理</div>
     <div class="ltab">
-      <div class="on" id="ltabLogin" onclick="lTab(0)">账 号 登 录</div>
-      <div id="ltabReg" onclick="lTab(1)">村 民 注 册</div>
+      <div class="on" id="ltabLogin" onclick="lTab(0)">干 部 登 录</div>
+      <div id="ltabReg" onclick="lTab(1)">村 民 登 录</div>
     </div>
     <div class="lerr" id="lerr"></div>
     <input type="text" id="l_acc" placeholder="账号（手机号）" autocomplete="username">
     <input type="password" id="l_pwd" placeholder="密码" autocomplete="current-password">
     <input type="text" id="l_name" placeholder="您的姓名（注册用）" style="display:none">
     <button class="lbtn" id="lbtnGo" onclick="doLogin()">登 录</button>
-    <div class="lnote">村干部与白名单账号请联系管理员开通<br>村民注册后可查看本村公开信息 · 数据仅存本机</div>
+    <div class="lnote">村干部与白名单账号请联系管理员开通<br>村民登录：输入<b>姓名+身份证号</b>（需管理员先录入您的信息）</div>
+    <div style="border-top:1px solid rgba(255,255,255,.15);margin-top:16px;padding-top:12px">
+      <button class="lbtn" style="background:rgba(255,255,255,.12);font-size:13px;padding:10px 0" onclick="document.getElementById('bakFile').click()">♻️ 从备份文件恢复数据</button>
+      <input type="file" id="bakFile" accept=".json" style="display:none" onchange="restoreFromBak(this)">
+      <div style="font-size:10.5px;color:rgba(255,255,255,.5);margin-top:8px">数据或账号丢失时，用之前导出的备份文件一键找回</div>
+    </div>
   </div>
 </div>
 
@@ -323,7 +328,8 @@ table.st th{background:#f1f5f9}
 <div id="dataM" style="position:absolute;inset:0;z-index:41;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this)this.style.display='none'">
   <div style="background:#fff;border-radius:16px;max-width:480px;width:100%;padding:20px;max-height:86vh;overflow-y:auto">
     <h3 style="margin-bottom:12px;display:flex;justify-content:space-between">💾 数据管理 <button class="btn small" onclick="document.getElementById('dataM').style.display='none'">关闭</button></h3>
-    <p style="font-size:13px;color:#6b7280;line-height:1.8;margin-bottom:14px">所有数据自动保存在本浏览器中，<b>不上传任何服务器</b>。换设备或换浏览器前请先导出备份文件。</p>
+    <div id="bakNote" style="display:none;font-size:12px;background:#fef9c3;border-radius:10px;padding:9px 12px;margin-bottom:12px"></div>
+    <p style="font-size:13px;color:#6b7280;line-height:1.8;margin-bottom:14px">所有数据自动保存在本浏览器中，<b>不上传任何服务器</b>。建议每次录完一批数据后<b>导出备份文件</b>存到手机「文件」里——即使浏览器数据被系统清理，也能一键恢复（数据+账号都在备份里）。</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn pri" onclick="exportJSON()">⬇️ 导出备份(JSON)</button>
       <button class="btn" id="dBtnImportBak" onclick="document.getElementById('impFile').click()">⬆️ 导入备份</button>
@@ -351,7 +357,8 @@ table.st th{background:#f1f5f9}
   <div class="gpanel">
     <h2>👋 欢迎使用檀园村务图 v3</h2>
     <ol>
-      <li><b>🔐 账号体系</b>：管理员（您）全功能；白名单账号可看可改不能删；村民账号只看公开信息（右上角👤账号里管理）</li>
+      <li><b>🔐 账号体系</b>：管理员全功能；白名单可看可改不能删；<b>村民用「姓名+身份证号」登录</b>（需先在户档里录入身份证号），登录后自动定位到自己家，可核对自己家全部信息并复制反馈，看别人的证件电话只显示首尾</li>
+      <li><b>💾 备份很重要</b>：数据存在本机浏览器，iOS 可能清理长期不用的网站数据——每次录完一批，💾数据 → 导出备份（数据+账号都打包），数据丢了可从登录页「♻️从备份文件恢复」一键找回</li>
       <li><b>✏️ 画区域</b>：逐点点击画出村界、组界、某家的田/山，点「闭合区域」命名保存（可中断续画）。画区域时自动切回俯视</li>
       <li><b>🏠 描屋顶</b>：用「✏️ 画区域」沿屋檐逐点描出<b>任意朝向的屋顶形状</b>，闭合后类型选「屋顶🏠」即建为户档，可填编号/户主</li>
       <li><b>🔍 识别屋顶</b>：把地图拉到要看的地块上空点它，自动框出屋顶（约九成准，误框点开即删）；漏的用「描屋顶」补</li>
@@ -376,6 +383,33 @@ var AREA_TYPES=[['village','村界','#7c3aed'],['group','组界','#f97316'],['fi
 
 /* ============ 数据 ============ */
 var DATA=load();
+/* IndexedDB 双存储：iOS清理localStorage时兜底自动恢复（比localStorage更耐清） */
+var idb=null;
+try{
+  var idbRq=indexedDB.open('tanyuan_db',1);
+  idbRq.onupgradeneeded=function(e){var db=e.target.result;if(!db.objectStoreNames.contains('kv'))db.createObjectStore('kv');};
+  idbRq.onsuccess=function(e){idb=e.target.result;idbRescue();};
+}catch(e){}
+function idbSet(k,v){try{if(idb){var tx=idb.transaction('kv','readwrite');tx.objectStore('kv').put(v,k);}}catch(e){}}
+function idbGet(k,cb){
+  try{
+    if(!idb){cb(null);return;}
+    var rq=idb.transaction('kv').objectStore('kv').get(k);
+    rq.onsuccess=function(){cb(rq.result||null);};rq.onerror=function(){cb(null);};
+  }catch(e){cb(null);}
+}
+function idbRescue(){ // 启动时：localStorage 被清但 IndexedDB 还有 → 静默救回
+  idbGet('data',function(v){
+    if(v&&( !DATA.houses||!DATA.houses.length)&&v.houses&&v.houses.length){
+      DATA=v;save();
+      redrawAll();refreshLegend();
+      console.log('数据已从IndexedDB自动恢复');
+    }
+  });
+  idbGet('users',function(v){
+    if(v&&!localStorage.getItem('tanyuan_users'))localStorage.setItem('tanyuan_users',JSON.stringify(v));
+  });
+}
 function load(){
   var d=null;
   try{d=JSON.parse(localStorage.getItem(LS_KEY));}catch(e){}
@@ -385,7 +419,12 @@ function load(){
   if(!d.hall)d.hall=null;
   return d;
 }
-function save(){localStorage.setItem(LS_KEY,JSON.stringify(DATA));}
+function save(){
+  localStorage.setItem(LS_KEY,JSON.stringify(DATA));
+  idbSet('data',DATA);
+  var dirty=+(localStorage.getItem('tanyuan_dirty')||0);
+  if(dirty<9999)localStorage.setItem('tanyuan_dirty',dirty+1);
+}
 function uid(){return (Math.random()<0.5?'h':'p')+Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
 
 /* ============ 地图 ============ */
@@ -899,7 +938,7 @@ var BIZDEFS=[['none','无'],['coop','合作社'],['company','公司'],['farm','�
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function opt(arr,sel){return arr.map(function(o){return '<option'+(o===sel?' selected':'')+'>'+o+'</option>';}).join('');}
 function groupNames(){var s=[];DATA.polys.forEach(function(p){if(p.type==='group'&&p.name&&s.indexOf(p.name)<0)s.push(p.name);});return s;}
-function openDrawer(id,isNew){
+function openDrawer(id,isNew,ro){
   var h=findH(id);if(!h)return;
   editing=h;editingNew=!!isNew;
   document.getElementById('dTitle').textContent='🏠 '+(h.owner||h.label||(h.no?'编号 '+h.no:'新建户档'));
@@ -929,12 +968,26 @@ function openDrawer(id,isNew){
     '<textarea id="f_biznote" placeholder="经营范围、带动就业等备注">'+esc(h.biz.note)+'</textarea></div>'+
   '<div class="sec"><h4>备注</h4><textarea id="f_note" placeholder="住房情况、特殊情况等">'+esc(h.note)+'</textarea></div>';
   document.getElementById('drawer').classList.add('open');
+  if(ro){ // 只读核对模式（村民看自己户）：禁用全部输入，只留关闭+复制反馈
+    [].forEach.call(document.querySelectorAll('#drawer input,#drawer select,#drawer textarea'),function(el){el.disabled=true;});
+    document.getElementById('dBody').insertAdjacentHTML('beforeend','<div style="font-size:12px;color:#047857;background:#ecfdf5;border-radius:10px;padding:10px 12px;margin-top:10px">👁️ 核对模式：以上为您家的全部登记信息。若有误，点下方「复制反馈」发给管理员更正。</div>');
+    document.getElementById('btnSave').style.display='none';
+    document.getElementById('btnDel').style.display='none';
+    document.getElementById('drawer').querySelector('.dfoot').insertAdjacentHTML('afterbegin','<button class="btn pri" style="background:#059669" onclick="copyFeedback()">📤 复制反馈</button>');
+    [].forEach.call(document.querySelectorAll('#drawer button'),function(el){
+      if(el.getAttribute('onclick')&&el.getAttribute('onclick').indexOf('closeDrawer()')>=0)return;
+      if(el.textContent.indexOf('复制反馈')>=0)return;
+      el.style.display='none';
+    });
+    document.getElementById('drawer').querySelector('.dfoot button[onclick="closeDrawer()"]').textContent='关闭';
+  }
 }
 function memberRow(m,i){
   return '<div class="mrow" data-i="'+i+'"><button class="del" onclick="delMember(this)" title="删除此人">✕</button>'+
   '<div class="frow"><div><label class="fl">姓名</label><input type="text" data-k="name" value="'+esc(m.name)+'"></div>'+
   '<div><label class="fl">与户主关系</label><select data-k="rel">'+opt(RELATIONS,m.rel)+'</select></div></div>'+
-  '<div class="frow"><div><label class="fl">性别</label><select data-k="sex"><option'+(m.sex==='男'?' selected':'')+'>男</option><option'+(m.sex==='女'?' selected':'')+'>女</option></select></div>'+
+  '<div class="frow"><div><label class="fl">身份证号</label><input type="text" data-k="idcard" value="'+esc(m.idcard||'')+'" placeholder="选填，村民可用姓名+身份证登录" maxlength="18"></div>'+
+  '<div><label class="fl">性别</label><select data-k="sex"><option'+(m.sex==='男'?' selected':'')+'>男</option><option'+(m.sex==='女'?' selected':'')+'>女</option></select></div>'+
   '<div><label class="fl">年龄</label><input type="number" data-k="age" value="'+esc(m.age)+'" min="0" max="130"></div>'+
   '<div><label class="fl">年收入(元)</label><input type="number" data-k="income" value="'+esc(m.income)+'" placeholder="0"></div></div>'+
   '<div class="frow"><div><label class="fl">健康状况</label><select data-k="health">'+opt(HEALTH,m.health)+'</select></div>'+
@@ -947,7 +1000,7 @@ function subRow(s,i){
   '<input type="text" data-k="note" style="flex:1.5" placeholder="备注" value="'+esc(s.note)+'">'+
   '<button class="btn small" style="flex:none;background:#fee2e2;color:#b91c1c" onclick="this.parentNode.remove()">✕</button></div>';
 }
-function addMember(){var w=document.createElement('div');w.innerHTML=memberRow({name:'',rel:'其他',sex:'男',age:'',health:'健康',income:'',politics:'群众',job:''},0);document.getElementById('f_members').appendChild(w.firstChild);}
+function addMember(){var w=document.createElement('div');w.innerHTML=memberRow({name:'',rel:'其他',sex:'男',age:'',idcard:'',health:'健康',income:'',politics:'群众',job:''},0);document.getElementById('f_members').appendChild(w.firstChild);}
 function delMember(btn){var rows=document.querySelectorAll('#f_members .mrow');if(rows.length<=1){showHint('至少保留一个成员（户主）');return;}btn.parentNode.remove();}
 function addSub(){var w=document.createElement('div');w.innerHTML=subRow({name:'',amount:'',note:''},0);document.getElementById('f_subs').appendChild(w.firstChild);}
 function closeDrawer(){
@@ -1104,14 +1157,34 @@ document.getElementById('btnStats').onclick=function(){
 function kpi(n,t,cls){return '<div class="kpi '+(cls||'')+'"><div class="n">'+n+'</div><div class="t">'+t+'</div></div>';}
 
 /* ============ 数据管理 ============ */
-document.getElementById('btnData').onclick=function(){document.getElementById('dataM').style.display='flex';};
+document.getElementById('btnData').onclick=function(){
+  document.getElementById('dataM').style.display='flex';
+  var dirty=+(localStorage.getItem('tanyuan_dirty')||0);
+  var last=+(localStorage.getItem('tanyuan_lastbak')||0);
+  var note=document.getElementById('bakNote');
+  if(dirty>=15||(!last&&DATA.houses.length>0)){
+    note.style.display='block';
+    note.innerHTML='⚠️ 自上次备份以来已修改 '+dirty+' 次。为防浏览器数据被系统清理，建议<b>现在导出一份备份</b>存到手机「文件」。';
+  }else if(last){
+    var d=new Date(last);
+    note.style.display='block';
+    note.style.background='#ecfdf5';note.style.color='#065f46';
+    note.textContent='✅ 上次备份：'+d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)+'（其后又有'+dirty+'次修改未导出）';
+  }else note.style.display='none';
+};
 function dl(name,content,type){
   var a=document.createElement('a');var b=new Blob([content],{type:type||'application/octet-stream'});
   a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();
   setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},500);
 }
 function stamp(){var d=new Date();return d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2);}
-function exportJSON(){dl('檀园村务备份_'+stamp()+'.json',JSON.stringify(DATA,null,1),'application/json');showHint('备份文件已下载');}
+function exportJSON(){
+  var pack={v:2,ts:Date.now(),app:'tanyuan',data:DATA,users:getUsers()};
+  dl('檀园村务备份_'+stamp()+'.json',JSON.stringify(pack,null,1),'application/json');
+  localStorage.setItem('tanyuan_dirty','0');
+  localStorage.setItem('tanyuan_lastbak',String(Date.now()));
+  showHint('✅ 备份已下载（含数据+账号），请妥善保存');
+}
 function importJSON(inp){
   var f=inp.files[0];if(!f)return;
   var r=new FileReader();
@@ -1119,18 +1192,47 @@ function importJSON(inp){
     try{
       var d=JSON.parse(r.result);
       if(!d.houses)throw 0;
+      if(d.users){ // v2 备份：连账号一起恢复
+        var cur=getUsers();
+        d.users.wl=(d.users.wl||[]).filter(function(w){return !cur.wl.some(function(x){return x.acc===w.acc;});});
+        d.users.vill=(d.users.vill||[]).filter(function(v){return !cur.vill.some(function(x){return x.acc===v.acc;});});
+        setUsers({wl:cur.wl.concat(d.users.wl),vill:cur.vill.concat(d.users.vill)});
+      }
       var ids={};DATA.houses.forEach(function(h){ids[h.id]=1;});
       var n=0;d.houses.forEach(function(h){if(!ids[h.id]){DATA.houses.push(h);n++;}});
       if(d.polys){var pids={};DATA.polys.forEach(function(p){pids[p.id]=1;});d.polys.forEach(function(p){if(!pids[p.id]){DATA.polys.push(p);}});}
       if(d.hall&&!DATA.hall)DATA.hall=d.hall;
-      save();redrawAll();refreshLegend();showHint('✅ 导入完成，新增 '+n+' 户（重复的未覆盖）');
-      document.getElementById('dataM').style.display='none';
+      save();redrawAll();refreshLegend();
+      var msg='✅ 导入完成，新增 '+n+' 户';
+      if(d.users)msg+='，账号已恢复';
+      if(!n&&!d.users)msg='未发现新数据（重复的未导入）';
+      showHint(msg);alert(msg);
+      var dm=document.getElementById('dataM');if(dm)dm.style.display='none';
     }catch(e){alert('文件格式不对，导入失败');}
   };
   r.readAsText(f);inp.value='';
 }
+/* 登录页：从备份文件恢复（数据没了也能先救回来再登录） */
+function restoreFromBak(inp){
+  var f=inp.files[0];if(!f)return;
+  var r=new FileReader();
+  r.onload=function(){
+    try{
+      var d=JSON.parse(r.result);
+      if(!d.houses)throw 0;
+      if(d.users){localStorage.setItem('tanyuan_users',JSON.stringify(d.users));idbSet('users',d.users);}
+      var ids={};DATA.houses.forEach(function(h){ids[h.id]=1;});
+      var n=0;d.houses.forEach(function(h){if(!ids[h.id]){DATA.houses.push(h);n++;}});
+      if(d.polys){var pids={};DATA.polys.forEach(function(p){pids[p.id]=1;});d.polys.forEach(function(p){if(!pids[p.id])DATA.polys.push(p);});}
+      if(d.hall&&!DATA.hall)DATA.hall=d.hall;
+      save();redrawAll();refreshLegend();
+      alert('✅ 已恢复 '+n+' 户数据'+(d.users?'和账号':'')+'，请登录');
+    }catch(e){alert('备份文件格式不对');}
+  };
+  r.readAsText(f);inp.value='';
+}
 function exportCSV(){
-  var rows=[['编号','组','门牌','户主','户主身份','身份证号','电话','成员姓名','关系','性别','年龄','健康状况','政治面貌','年收入(元)','就业','家庭类型','经营主体','补贴','坐标','备注']];
+  var rows=[['编号','组','门牌','户主','户主身份','身份证号','电话','成员姓名','成员身份证号','关系','性别','年龄','健康状况','政治面貌','年收入(元)','就业','家庭类型','经营主体','补贴','坐标','备注']];
   var tmap={tuopin:'脱贫户',jiance:'监测户',dibao:'低保户',wubao:'特困',canji:'残疾家庭',jun:'军烈属'};
   DATA.houses.forEach(function(h){
     var tags=(h.tags||[]).map(function(t){return tmap[t]||t;}).join('/');
@@ -1138,7 +1240,7 @@ function exportCSV(){
     var subs=(h.subsidies||[]).map(function(s){return (s.name||'')+(s.amount?'('+s.amount+'元)':'');}).join('；');
     var ms=h.members&&h.members.length?h.members:[{name:''}];
     ms.forEach(function(m){
-      rows.push([h.no,h.group,h.label,h.owner,h.owner_role||'',h.owner_idcard||'',h.phone,m.name,m.rel,m.sex,m.age,m.health,m.politics,m.income,m.job,tags,biz,subs,h.lon.toFixed(6)+','+h.lat.toFixed(6),h.note]);
+      rows.push([h.no,h.group,h.label,h.owner,h.owner_role||'',h.owner_idcard||'',h.phone,m.name,m.idcard||'',m.rel,m.sex,m.age,m.health,m.politics,m.income,m.job,tags,biz,subs,h.lon.toFixed(6)+','+h.lat.toFixed(6),h.note]);
     });
   });
   var csv='\ufeff'+rows.map(function(r){return r.map(function(c){return '"'+String(c==null?'':c).replace(/"/g,'""')+'"';}).join(',');}).join('\r\n');
@@ -1154,20 +1256,20 @@ function clearAll(){
 /* 使用说明入口在「更多」菜单 */
 
 /* ============ Excel 批量导入 ============ */
-var TPL_HEAD=['编号','户主','户主身份','身份证号','电话','组','门牌','坐标','成员姓名','与户主关系','性别','年龄','政治面貌','健康状况','年收入(元)','就业','家庭类型','补贴项目','补贴金额(元/年)','经营主体类型','经营主体名称','备注'];
+var TPL_HEAD=['编号','户主','户主身份','身份证号','电话','组','门牌','坐标','成员姓名','成员身份证号','与户主关系','性别','年龄','政治面貌','健康状况','年收入(元)','就业','家庭类型','补贴项目','补贴金额(元/年)','经营主体类型','经营主体名称','备注'];
 function dlTemplate(){
   var rows=[TPL_HEAD,
-    ['1','张三','村组干部','430221197001011234','13800000000','董大塘组','董大塘组12号','113.2300,27.7350','张三','户主','男','55','中共党员','慢性病','12000','务农','脱贫户','耕地地力保护补贴','800','家庭农场','檀园种植农场',''],
-    ['1','','','','','','','','张三妻','配偶','女','53','群众','健康','5000','家务','','','','','',''],
-    ['2','李四','一般村民','','','庙家组','','','李四','户主','男','40','群众','健康','30000','务工','监测户','低保金','2400','','',''],
-    ['3','','','','','','','','','','','','','','','','','','','',''],
-    ['4','','','','','','','','','','','','','','','','','','','','']
+    ['1','张三','村组干部','430221197001011234','13800000000','董大塘组','董大塘组12号','113.2300,27.7350','张三','430221197001011234','户主','男','55','中共党员','慢性病','12000','务农','脱贫户','耕地地力保护补贴','800','家庭农场','檀园种植农场',''],
+    ['1','','','','','','','','张三妻','430221197401012345','配偶','女','53','群众','健康','5000','家务','','','','','',''],
+    ['2','李四','一般村民','430221198501013456','','庙家组','','','李四','430221198501013456','户主','男','40','群众','健康','30000','务工','监测户','低保金','2400','','',''],
+    ['3','','','','','','','','','','','','','','','','','','','','','',''],
+    ['4','','','','','','','','','','','','','','','','','','','','','','']
   ];
   var csv='\ufeff'+rows.map(function(r){return r.map(function(c){return '"'+String(c==null?'':c).replace(/"/g,'""')+'"';}).join(',');}).join('\r\n');
   dl('檀园村导入模板.csv',csv,'text/csv');
   showHint('模板已下载：只需编号+在任意一行填一次「坐标」，导入即批量生成标记点');
 }
-var HMAP={'编号':'no','房号':'no','户主':'owner','户主姓名':'owner','电话':'phone','联系电话':'phone','手机':'phone','身份证号':'oidcard','身份证':'oidcard','证件号':'oidcard','户主身份':'orole','坐标':'coord','坐标(经纬度)':'coord','经纬度':'coord','组':'group','村组':'group','小组':'group','组别':'group','门牌':'label','门牌号':'label','别名':'label','成员姓名':'mname','姓名':'mname','人口姓名':'mname','关系':'rel','与户主关系':'rel','性别':'sex','年龄':'age','政治面貌':'politics','健康状况':'health','健康':'health','年收入':'income','年收入(元)':'income','收入':'income','就业':'job','就业就学':'job','职业':'job','家庭类型':'tags','标签':'tags','类型':'tags','补贴项目':'sname','补贴':'sname','补贴名称':'sname','补贴金额':'samount','补贴金额(元/年)':'samount','补贴金额(元)':'samount','经营主体类型':'biztype','经营主体名称':'bizname','备注':'note'};
+var HMAP={'编号':'no','房号':'no','户主':'owner','户主姓名':'owner','电话':'phone','联系电话':'phone','手机':'phone','身份证号':'oidcard','身份证':'oidcard','证件号':'oidcard','户主身份证号':'oidcard','户主身份':'orole','坐标':'coord','坐标(经纬度)':'coord','经纬度':'coord','组':'group','村组':'group','小组':'group','组别':'group','门牌':'label','门牌号':'label','别名':'label','成员姓名':'mname','姓名':'mname','人口姓名':'mname','成员身份证号':'midcard','成员身份证':'midcard','关系':'rel','与户主关系':'rel','性别':'sex','年龄':'age','政治面貌':'politics','健康状况':'health','健康':'health','年收入':'income','年收入(元)':'income','收入':'income','就业':'job','就业就学':'job','职业':'job','家庭类型':'tags','标签':'tags','类型':'tags','补贴项目':'sname','补贴':'sname','补贴名称':'sname','补贴金额':'samount','补贴金额(元/年)':'samount','补贴金额(元)':'samount','经营主体类型':'biztype','经营主体名称':'bizname','备注':'note'};
 var TAGREV={'脱贫户':'tuopin','脱贫':'tuopin','监测户':'jiance','监测':'jiance','低保户':'dibao','低保':'dibao','特困':'wubao','五保':'wubao','特困/五保':'wubao','残疾家庭':'canji','残疾':'canji','军烈属':'jun','军属':'jun'};
 var BIZREV={'无':'none','':'none','合作社':'coop','公司':'company','家庭农场':'farm','个体工商户':'shop','个体户':'shop'};
 function normHead(h){return String(h||'').replace(/[\s（）()：:、,，\/]/g,function(c){return '';}).replace(/[\s（）()：:、,，]/g,'');}
@@ -1292,11 +1394,12 @@ function parseTable(rows){
         if(!m){ // 复用空的默认成员位，避免表格里出现一行空白
           h.members.forEach(function(x){if(!m&&!x.name)m=x;});
         }
-        if(!m){m={name:o.mname,rel:o.rel||'其他',sex:o.sex||'男',age:'',health:'健康',income:'',politics:'群众',job:''};h.members.push(m);}
+        if(!m){m={name:o.mname,rel:o.rel||'其他',sex:o.sex||'男',age:'',idcard:'',health:'健康',income:'',politics:'群众',job:''};h.members.push(m);}
         mk++;
         if(o.rel)m.rel=o.rel;
         if(o.sex)m.sex=o.sex;
         if(o.age)m.age=o.age;
+        if(o.midcard)m.idcard=o.midcard;
         if(o.health)m.health=o.health;
         if(o.politics)m.politics=o.politics;
         if(o.income)m.income=o.income;
@@ -1385,42 +1488,69 @@ function getUsers(){
   try{var u=JSON.parse(localStorage.getItem('tanyuan_users')||'{}');u.wl=u.wl||[];u.vill=u.vill||[];return u;}
   catch(e){return {wl:[],vill:[]};}
 }
-function setUsers(u){localStorage.setItem('tanyuan_users',JSON.stringify(u));}
+function setUsers(u){localStorage.setItem('tanyuan_users',JSON.stringify(u));idbSet('users',u);}
 function lTab(reg){
   document.getElementById('ltabLogin').classList.toggle('on',!reg);
   document.getElementById('ltabReg').classList.toggle('on',!!reg);
-  document.getElementById('l_name').style.display=reg?'block':'none';
-  document.getElementById('lbtnGo').textContent=reg?'注 册 并 进 入':'登 录';
+  document.getElementById('l_name').style.display='none';
+  var acc=document.getElementById('l_acc'),pwd=document.getElementById('l_pwd');
+  if(reg){ // 村民登录：姓名+身份证号
+    acc.placeholder='您的姓名';acc.value='';
+    pwd.type='text';pwd.placeholder='身份证号（18位）';pwd.value='';
+    document.getElementById('lbtnGo').textContent='村 民 登 录';
+  }else{
+    acc.placeholder='账号（手机号）';acc.value='';
+    pwd.type='password';pwd.placeholder='密码';pwd.value='';
+    document.getElementById('lbtnGo').textContent='登 录';
+  }
   document.getElementById('lerr').style.display='none';
 }
 function lErr(m){var e=document.getElementById('lerr');e.textContent=m;e.style.display='block';}
+function normId(s){return String(s||'').replace(/[\sxX*$]/g,'').toUpperCase();}
 function doLogin(){
   var acc=document.getElementById('l_acc').value.trim(),pwd=document.getElementById('l_pwd').value;
-  var reg=document.getElementById('ltabReg').classList.contains('on');
-  var name=document.getElementById('l_name').value.trim();
+  var vil=document.getElementById('ltabReg').classList.contains('on');
+  if(vil){villLogin(acc,pwd);return;}
   if(!acc||!pwd){lErr('请输入账号和密码');return;}
-  if(acc===ADMIN.acc&&pwd===ADMIN.pwd&&!reg){loginOK('admin',ADMIN.name,acc);return;}
+  if(acc===ADMIN.acc&&pwd===ADMIN.pwd){loginOK('admin',ADMIN.name,acc);return;}
   var u=getUsers();
-  if(reg){
-    if(!/^1\d{10}$/.test(acc)){lErr('账号请用11位手机号');return;}
-    if(pwd.length<6){lErr('密码至少6位');return;}
-    if(!name){lErr('请填写您的姓名');return;}
-    if(acc===ADMIN.acc||u.wl.some(function(x){return x.acc===acc;})||u.vill.some(function(x){return x.acc===acc;})){lErr('该账号已被注册');return;}
-    u.vill.push({acc:acc,pwd:pwd,name:name});setUsers(u);
-    loginOK('villager',name,acc);return;
-  }
   var w=u.wl.filter(function(x){return x.acc===acc&&x.pwd===pwd;})[0];
   if(w){loginOK('wl',w.name||w.acc,acc);return;}
   var v=u.vill.filter(function(x){return x.acc===acc&&x.pwd===pwd;})[0];
-  if(v){loginOK('villager',v.name||v.acc,acc);return;}
+  if(v){loginOK('villager',v.name||v.acc,acc,null);return;}
   lErr('账号或密码不正确');
 }
-function loginOK(role,name,acc){
-  ROLE=role;ME={name:name,acc:acc};
-  localStorage.setItem('tanyuan_session',JSON.stringify({role:role,name:name,acc:acc,ts:Date.now()}));
+/* 村民登录：姓名+身份证号匹配户档（户主或已录身份证的成员） */
+function villLogin(name,idcard){
+  if(!name||!idcard){lErr('请输入姓名和身份证号');return;}
+  var id=normId(idcard);
+  if(id.length<15){lErr('身份证号格式不对（需15或18位）');return;}
+  var hit=null,myHouse=null;
+  DATA.houses.forEach(function(h){
+    if(hit)return;
+    if(h.owner&&h.owner===name&&normId(h.owner_idcard)===id){hit={name:name,house:h.id};return;}
+    (h.members||[]).forEach(function(m){
+      if(!hit&&m.name===name&&normId(m.idcard)===id)hit={name:name,house:h.id};
+    });
+  });
+  if(!hit){lErr('未找到匹配信息：请核对姓名与身份证号，仍登不上请联系管理员');return;}
+  myHouse=hit.house;
+  loginOK('villager',name,id,myHouse);
+  var g=document.getElementById('guide');
+  if(g&&g.classList.contains('open')){localStorage.setItem('tanyuan_guide','1');g.classList.remove('open');} // 村民登录：收起说明页，直接看家
+  var h=findH(myHouse);
+  if(h){
+    map.flyTo({center:[h.lon,h.lat],zoom:17.5,pitch:45,bearing:-20,duration:1800});
+    setTimeout(function(){openCard(myHouse);},1900);
+    showHint('🏠 已定位到您的家');
+  }
+}
+function loginOK(role,name,acc,houseId){
+  ROLE=role;ME={name:name,acc:acc,houseId:houseId||null};
+  localStorage.setItem('tanyuan_session',JSON.stringify({role:role,name:name,acc:acc,houseId:houseId||null,ts:Date.now()}));
   document.getElementById('login').style.display='none';
   applyRole();
-  showHint('欢迎，'+name+'（'+roleName()+'）');
+  if(role!=='villager')showHint('欢迎，'+name+'（'+roleName()+'）');
 }
 function roleName(){return ROLE==='admin'?'管理员':ROLE==='wl'?'白名单':'村民';}
 function logoutAsk(){
@@ -1447,7 +1577,7 @@ function applyRole(){
   document.getElementById('uChip').style.display='inline-flex';
   document.getElementById('uChip').title=ME.name+' · '+roleName();
   document.getElementById('uName').textContent=ME.name;
-  if(ROLE==='villager')showHint('村民模式：仅显示公开信息');
+  if(ROLE==='villager')showHint(ME.houseId?'👤 村民模式：点自己的家可核对信息；他人的证件电话仅显示首尾':'村民模式：他人的证件电话仅显示首尾');
 }
 /* 账号管理 */
 function openAcct(){
@@ -1475,29 +1605,75 @@ function villDel(i){if(!confirm('移除该村民账号？'))return;var u=getUser
 
 /* ============ 简略卡片 ============ */
 var cardId=null,cardAt=0;
+/* 脱敏：只露首尾 */
+function maskId(s){
+  s=String(s||'');if(!s)return '';
+  if(s.length<=8)return s[0]+'***'+s.slice(-1);
+  return s.slice(0,3)+'*'.repeat(Math.max(s.length-7,3))+s.slice(-4);
+}
+function maskPhone(s){
+  s=String(s||'');if(!s)return '';
+  if(s.length<=7)return s[0]+'***'+s.slice(-1);
+  return s.slice(0,3)+'****'+s.slice(-4);
+}
 function openCard(id){
   var h=findH(id);if(!h)return;
   cardId=id;cardAt=Date.now();
   var admin=ROLE==='admin',wl=ROLE==='wl';
+  var self=(ROLE==='villager'&&ME&&ME.houseId===id);
   var rows='';
   function row(k,v){if(v===undefined||v===null||v==='')v='—';return '<tr><td class="k">'+k+'</td><td>'+esc(v)+'</td></tr>';}
   rows+=row('编号',h.no||h.label||'未编号');
   rows+=row('户主',h.owner||'未登记');
   rows+=row('户主身份',h.owner_role||'一般村民');
-  if(admin||wl){
+  if(admin||wl||self){ // 干部或本人：完整证件/电话
     rows+=row('身份证号',h.owner_idcard||'');
     rows+=row('联系电话',h.phone||'');
+  }else if(ROLE==='villager'){ // 村民看别人：只露首尾
+    rows+=row('身份证号',h.owner_idcard?maskId(h.owner_idcard):'');
+    rows+=row('联系电话',h.phone?maskPhone(h.phone):'');
   }
   var btns='';
-  if(admin||wl)btns+='<button class="btn pri" onclick="cardDetail()">📋 查看详情</button>';
+  if(admin||wl||self)btns+='<button class="btn pri" onclick="cardDetail()">📋 '+(self?'核对信息':'查看详情')+'</button>';
+  if(self)btns+='<button class="btn" style="background:#ecfdf5;color:#047857" onclick="copyFeedback()">📤 复制反馈</button>';
   if(admin)btns+='<button class="btn" style="background:#fee2e2;color:#b91c1c" onclick="cardDel()">🗑️ 删除信息</button>';
   document.getElementById('card').innerHTML=
-    '<div class="chead"><b>🏠 '+(h.owner||'未登记户')+(h.group?'<span style="font-size:12px;color:#64748b;font-weight:400"> · '+esc(h.group)+'</span>':'')+'</b><button class="cx" onclick="closeCard()">✕</button></div>'+
+    '<div class="chead"><b>🏠 '+(h.owner||'未登记户')+(h.group?'<span style="font-size:12px;color:#64748b;font-weight:400"> · '+esc(h.group)+'</span>':'')+(self?'<span style="font-size:11px;color:#047857;font-weight:700;background:#d1fae5;border-radius:6px;padding:1px 6px;margin-left:6px">我家</span>':'')+'</b><button class="cx" onclick="closeCard()">✕</button></div>'+
     '<table>'+rows+'</table>'+(btns?'<div class="cbtns">'+btns+'</div>':'');
   document.getElementById('card').classList.add('open');
 }
 function closeCard(){document.getElementById('card').classList.remove('open');cardId=null;}
-function cardDetail(){if(ROLE==='villager'){showHint('村民账号仅显示公开信息');return;}var id=cardId;if(!id)return;closeCard();openDrawer(id);}
+function cardDetail(){
+  var id=cardId;if(!id)return;
+  var self=(ROLE==='villager'&&ME&&ME.houseId===id);
+  if(ROLE==='villager'&&!self){showHint('他人详细信息仅管理员可见');return;}
+  closeCard();openDrawer(id,false,self); // 村民本人：只读核对模式
+}
+/* 村民反馈：把自己户信息复制成文本，发给管理员核对 */
+function copyFeedback(){
+  var h=findH(cardId);if(!h)return;
+  var lines=['【檀园村务图·信息核对反馈】','时间：'+new Date().toLocaleString(),'反馈人：'+ME.name];
+  lines.push('户主：'+(h.owner||'未登记')+'（身份证 '+(h.owner_idcard||'未录')+'）');
+  lines.push('编号：'+(h.no||'未编号')+'；组：'+(h.group||'未登记')+'；电话：'+(h.phone||'未录'));
+  (h.members||[]).forEach(function(m,i){
+    if(!m.name)return;
+    lines.push('成员'+(i+1)+'：'+m.name+'（'+(m.rel||'')+'） 身份证 '+(m.idcard||'未录')+' '+((m.sex||'')+(m.age?('·'+m.age+'岁'):''))+' '+(m.health||'')+' '+(m.politics||'')+(m.income?(' 年收入'+m.income+'元'):''));
+  });
+  if(h.subsidies&&h.subsidies.length)lines.push('补贴：'+h.subsidies.map(function(s){return (s.name||'')+(s.amount?'('+s.amount+'元)':'');}).join('；'));
+  lines.push('——以上信息如有误，请管理员核对更正。');
+  var txt=lines.join('\n');
+  var done=function(){alert('已复制核对信息！粘贴发送给管理员即可反馈');};
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(done,function(){fbFallback(txt);});
+  }else fbFallback(txt);
+}
+function fbFallback(txt){
+  if(window.confirm('您的浏览器不支持自动复制，点确定后长按文本全选复制：\n\n'+txt)){
+    var ta=document.createElement('textarea');ta.value=txt;ta.style.cssText='position:fixed;left:-9999px';document.body.appendChild(ta);ta.select();ta.focus();
+    try{document.execCommand('copy');alert('已复制核对信息！粘贴发送给管理员即可反馈');}catch(e){alert('复制失败，请截图本页发给管理员');}
+    ta.remove();
+  }
+}
 function cardDel(){
   if(ROLE!=='admin'){showHint('当前身份无删除权限');return;}
   var h=findH(cardId);if(!h)return;
@@ -1514,9 +1690,17 @@ map.on('click',function(){if(cardId&&Date.now()-cardAt>350)closeCard();});
   try{
     var s=JSON.parse(localStorage.getItem('tanyuan_session')||'null');
     if(s&&s.role&&Date.now()-s.ts<7*24*3600*1000){
-      ROLE=s.role;ME={name:s.name,acc:s.acc};
+      ROLE=s.role;ME={name:s.name,acc:s.acc,houseId:s.houseId||null};
       document.getElementById('login').style.display='none';
       applyRole();
+      if(ROLE==='villager'&&ME.houseId){
+        var h=findH(ME.houseId);
+        if(h){
+          map.flyTo({center:[h.lon,h.lat],zoom:17.5,pitch:45,bearing:-20,duration:1800});
+          setTimeout(function(){openCard(ME.houseId);},1900);
+          showHint('🏠 已定位到您的家');
+        }
+      }
       return;
     }
   }catch(e){}
@@ -1527,7 +1711,7 @@ map.on('click',function(){if(cardId&&Date.now()-cardAt>350)closeCard();});
 })();
 
 if(window.innerWidth<=600&&document.getElementById('legend')){toggleLegend();} // 手机端图例默认折叠
-window.__VER='v3.5';
+window.__VER='v3.6';
 </script>
 </body>
 </html>
